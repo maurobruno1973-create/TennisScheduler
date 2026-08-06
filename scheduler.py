@@ -1,7 +1,7 @@
 """
 Tennis Mixed Doubles Scheduler
 
-Versione 0.2
+Versione 0.5
 
 Motore del programma.
 Tutti i dati del torneo vengono letti da config.py
@@ -76,6 +76,10 @@ class TournamentScheduler:
         # Ottimizzazione
         self.men_deviation_vars = {}
         self.soft_avoid_vars = []
+
+        # Statistiche future
+        self.opponent_count_vars = {}
+
 
     def generate_matches(self):
 
@@ -245,7 +249,65 @@ class TournamentScheduler:
 
                     if cond1 or cond2:
                         print(f" - {match}")
-                        
+    
+    def build_opponent_count_variables(self):
+
+      print("\nCreazione variabili Opponent Matrix...")
+
+      self.opponent_count_vars = {}
+
+      players = sorted(self.player_count_vars.keys())
+
+      count = 0
+
+      for i in range(len(players)):
+          for j in range(i + 1, len(players)):
+
+              p1 = players[i]
+              p2 = players[j]
+
+              self.opponent_count_vars[(p1, p2)] = (
+                  self.model.NewIntVar(
+                      0,
+                      config.NUM_MATCHES,
+                      f"opp_{p1}_{p2}"
+                  )
+              )
+
+              count += 1
+
+      print(f"Variabili create: {count}")
+
+    def add_opponent_count_constraints(self):
+
+      print("\nCollegamento Opponent Matrix...")
+
+      for (p1, p2), count_var in self.opponent_count_vars.items():
+
+        opponent_matches = []
+
+        for match_index, match in enumerate(self.matches):
+
+            team1 = [match.pair1.man, match.pair1.woman]
+            team2 = [match.pair2.man, match.pair2.woman]
+
+            opponents = (
+                (p1 in team1 and p2 in team2)
+                or
+                (p1 in team2 and p2 in team1)
+            )
+
+            if opponents:
+                opponent_matches.append(
+                    self.match_vars[match_index]
+                )
+
+        self.model.Add(
+            count_var == sum(opponent_matches)
+        )
+      
+      print(f"Vincoli creati: {len(self.opponent_count_vars)}")
+
     def add_objective(self):
 
       print("\nFunzione obiettivo")
@@ -367,6 +429,8 @@ if __name__ == "__main__":
 
     scheduler.build_men_deviation_variables()
     scheduler.build_soft_avoid_variables()
+    scheduler.build_opponent_count_variables()
+    scheduler.add_opponent_count_constraints()
     scheduler.add_basic_constraints()
     scheduler.add_women_constraints()
     scheduler.add_objective()

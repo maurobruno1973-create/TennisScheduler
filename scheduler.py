@@ -75,6 +75,7 @@ class TournamentScheduler:
 
         # Ottimizzazione
         self.men_deviation_vars = {}
+        self.soft_avoid_vars = []
 
     def generate_matches(self):
 
@@ -198,15 +199,80 @@ class TournamentScheduler:
 
         print(f"Variabili create: {len(self.men_deviation_vars)}")
 
+    def build_soft_avoid_variables(self):
+
+        print("\nCreazione penalità incontri indesiderati...")
+
+        self.soft_avoid_vars = []
+
+        for i, match in enumerate(self.matches):
+
+            penalty = False
+
+            for p1, p2 in config.SOFT_AVOID_OPPONENTS:
+
+                pair1 = (match.pair1.man, match.pair1.woman)
+                pair2 = (match.pair2.man, match.pair2.woman)
+
+                # p1 è nella prima coppia e p2 nella seconda
+                cond1 = (p1 in pair1) and (p2 in pair2)
+
+                # oppure viceversa
+                cond2 = (p2 in pair1) and (p1 in pair2)
+
+                if cond1 or cond2:
+                    penalty = True
+                    break
+
+            if penalty:
+                self.soft_avoid_vars.append(self.match_vars[i])
+
+        print(f"Partite penalizzate: {len(self.soft_avoid_vars)}")
+
+        if self.soft_avoid_vars:
+
+            print("\nElenco:")
+
+            for i, match in enumerate(self.matches):
+
+                pair1 = (match.pair1.man, match.pair1.woman)
+                pair2 = (match.pair2.man, match.pair2.woman)
+
+                for p1, p2 in config.SOFT_AVOID_OPPONENTS:
+
+                    cond1 = (p1 in pair1) and (p2 in pair2)
+                    cond2 = (p2 in pair1) and (p1 in pair2)
+
+                    if cond1 or cond2:
+                        print(f" - {match}")
+                        
     def add_objective(self):
 
-        print("\nFunzione obiettivo...")
-        print("Minimizzazione deviazione uomini.")
+      print("\nFunzione obiettivo")
 
-        self.model.Minimize(
-            sum(self.men_deviation_vars.values())
-        )
+      objective = 0
 
+      # ----------------------------------
+      # Bilanciamento uomini
+      # ----------------------------------
+
+      objective += (
+        config.OBJECTIVE_WEIGHTS["MEN_BALANCE"]
+        * sum(self.men_deviation_vars.values())
+      )
+
+      # ----------------------------------
+      # Incontri da evitare
+      # ----------------------------------
+
+      objective += (
+        config.OBJECTIVE_WEIGHTS["SOFT_AVOID_OPPONENTS"]
+        * sum(self.soft_avoid_vars)
+      )
+
+      self.model.Minimize(objective)
+
+      print("Funzione obiettivo impostata.")
 
 
     def add_women_constraints(self):
@@ -300,6 +366,7 @@ if __name__ == "__main__":
     scheduler.compute_targets()
 
     scheduler.build_men_deviation_variables()
+    scheduler.build_soft_avoid_variables()
     scheduler.add_basic_constraints()
     scheduler.add_women_constraints()
     scheduler.add_objective()

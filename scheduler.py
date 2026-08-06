@@ -69,7 +69,12 @@ class TournamentScheduler:
         # Statistiche
         self.player_matches = {}
         self.player_count_vars = {}
+
+        # Target
         self.target_men_matches = 0
+
+        # Ottimizzazione
+        self.men_deviation_vars = {}
 
     def generate_matches(self):
 
@@ -170,6 +175,39 @@ class TournamentScheduler:
         print("----------------")
         print(f"Partite per uomo: {self.target_men_matches}")
 
+    def build_men_deviation_variables(self):
+
+        print("\nCreazione variabili deviazione uomini...")
+
+        self.men_deviation_vars = {}
+
+        for man in config.MEN:
+
+            deviation = self.model.NewIntVar(
+                0,
+                config.NUM_MATCHES,
+                f"dev_{man}"
+            )
+
+            self.model.AddAbsEquality(
+                deviation,
+                self.player_count_vars[man] - self.target_men_matches
+            )
+
+            self.men_deviation_vars[man] = deviation
+
+        print(f"Variabili create: {len(self.men_deviation_vars)}")
+
+    def add_objective(self):
+
+        print("\nFunzione obiettivo...")
+        print("Minimizzazione deviazione uomini.")
+
+        self.model.Minimize(
+            sum(self.men_deviation_vars.values())
+        )
+
+
 
     def add_women_constraints(self):
 
@@ -232,6 +270,24 @@ class TournamentScheduler:
                 f"{solver.Value(self.player_count_vars[player])}"
             )
 
+            
+        print("\n=== DEVIAZIONE UOMINI ===")
+
+        total = 0
+
+        for man in config.MEN:
+
+            dev = solver.Value(self.men_deviation_vars[man])
+
+            print(f"{man:10} {dev}")
+
+            total += dev
+
+        print("----------------------")
+        print(f"Totale      {total}")
+
+
+
 
 if __name__ == "__main__":
 
@@ -243,7 +299,9 @@ if __name__ == "__main__":
     scheduler.build_player_count_variables()
     scheduler.compute_targets()
 
+    scheduler.build_men_deviation_variables()
     scheduler.add_basic_constraints()
     scheduler.add_women_constraints()
+    scheduler.add_objective()
     
     scheduler.solve()

@@ -62,6 +62,14 @@ class TournamentScheduler:
 
         self.matches = []
 
+        # OR-Tools
+        self.model = None
+        self.match_vars = {}
+
+        # Statistiche
+        self.player_matches = {}
+        self.player_count_vars = {}
+
     def generate_matches(self):
 
         self.matches = []
@@ -100,6 +108,56 @@ class TournamentScheduler:
             self.match_vars[i] = self.model.NewBoolVar(f"match_{i}")
 
         print(f"Variabili create: {len(self.match_vars)}")
+
+    def build_player_counters(self):
+
+        print("\nCreazione contatori giocatori...")
+
+        self.player_matches = {}
+
+        # inizializza tutti i giocatori
+        for man in config.MEN:
+            self.player_matches[man] = []
+
+        for woman in config.WOMEN:
+            self.player_matches[woman] = []
+
+        # per ogni partita aggiunge la variabile ai 4 giocatori coinvolti
+        for i, match in enumerate(self.matches):
+
+            players = (
+                match.pair1.man,
+                match.pair1.woman,
+                match.pair2.man,
+                match.pair2.woman,
+            )
+
+            for player in players:
+                self.player_matches[player].append(self.match_vars[i])
+
+        print("Contatori creati.")
+
+    def build_player_count_variables(self):
+
+        print("\nCreazione variabili conteggio giocatori...")
+
+        self.player_count_vars = {}
+
+        for player, vars_list in self.player_matches.items():
+
+            count = self.model.NewIntVar(
+                0,
+                len(vars_list),
+                f"count_{player}"
+            )
+
+            self.model.Add(count == sum(vars_list))
+
+            self.player_count_vars[player] = count
+
+        print(f"Variabili create: {len(self.player_count_vars)}")
+
+
 
     def add_basic_constraints(self):
 
@@ -140,7 +198,10 @@ class TournamentScheduler:
 if __name__ == "__main__":
 
     scheduler = TournamentScheduler()
+
     scheduler.generate_matches()
     scheduler.build_model()
+    scheduler.build_player_counters()
+    scheduler.build_player_count_variables()
     scheduler.add_basic_constraints()
     scheduler.solve()

@@ -69,6 +69,7 @@ class TournamentScheduler:
         # Statistiche
         self.player_matches = {}
         self.player_count_vars = {}
+        self.target_men_matches = 0
 
     def generate_matches(self):
 
@@ -157,6 +158,33 @@ class TournamentScheduler:
 
         print(f"Variabili create: {len(self.player_count_vars)}")
 
+    def compute_targets(self):
+
+        total_male_slots = config.NUM_MATCHES * 2
+
+        self.target_men_matches = (
+            total_male_slots // len(config.MEN)
+        )
+
+        print("\nTarget uomini")
+        print("----------------")
+        print(f"Partite per uomo: {self.target_men_matches}")
+
+
+    def add_women_constraints(self):
+
+        print("\nVincolo: tutte le donne giocano lo stesso numero di partite...")
+
+        women = config.WOMEN
+
+        for i in range(len(women) - 1):
+            self.model.Add(
+                self.player_count_vars[women[i]]
+                ==
+                self.player_count_vars[women[i + 1]]
+            )
+
+        print("Vincolo aggiunto.")
 
 
     def add_basic_constraints(self):
@@ -195,6 +223,16 @@ class TournamentScheduler:
 
                 count += 1
 
+        print("\n=== PARTITE PER GIOCATORE ===")
+
+        for player in sorted(self.player_count_vars):
+
+            print(
+                f"{player:10} "
+                f"{solver.Value(self.player_count_vars[player])}"
+            )
+
+
 if __name__ == "__main__":
 
     scheduler = TournamentScheduler()
@@ -203,5 +241,9 @@ if __name__ == "__main__":
     scheduler.build_model()
     scheduler.build_player_counters()
     scheduler.build_player_count_variables()
+    scheduler.compute_targets()
+
     scheduler.add_basic_constraints()
+    scheduler.add_women_constraints()
+    
     scheduler.solve()

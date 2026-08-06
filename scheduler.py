@@ -101,9 +101,46 @@ class TournamentScheduler:
 
         print(f"Variabili create: {len(self.match_vars)}")
 
+    def add_basic_constraints(self):
+
+        print("\nAggiunta vincoli base...")
+
+        self.model.Add(
+            sum(self.match_vars.values()) == config.NUM_MATCHES
+        )
+
+        print(f"Numero partite da selezionare: {config.NUM_MATCHES}")
+        
+    def solve(self):
+
+        print("\nRisoluzione...")
+
+        solver = cp_model.CpSolver()
+
+        status = solver.Solve(self.model)
+
+        if status != cp_model.OPTIMAL:
+            print("Nessuna soluzione.")
+            return
+
+        print("Soluzione trovata.\n")
+
+        print("=== PARTITE SELEZIONATE ===")
+
+        count = 1
+
+        for i, match in enumerate(self.matches):
+
+            if solver.Value(self.match_vars[i]):
+
+                print(f"{count:2d}. {match}")
+
+                count += 1
+
 if __name__ == "__main__":
 
     scheduler = TournamentScheduler()
-
     scheduler.generate_matches()
     scheduler.build_model()
+    scheduler.add_basic_constraints()
+    scheduler.solve()

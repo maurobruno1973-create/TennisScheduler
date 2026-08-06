@@ -65,6 +65,13 @@ class TournamentScheduler:
 
         self.matches = []
 
+        print("\n=== COPPIE DISPONIBILI ===")
+
+        for i, pair in enumerate(self.pairs, start=1):
+            print(f"{i:2d}. {pair}")
+
+        print("\nGenerazione partite...")
+
         for p1, p2 in combinations(self.pairs, 2):
 
             match = Match(p1, p2)
@@ -72,8 +79,12 @@ class TournamentScheduler:
             if match.is_valid():
                 self.matches.append(match)
 
-        print(f"Coppie disponibili : {len(self.pairs)}")
-        print(f"Partite generate    : {len(self.matches)}")
+        print(f"\nPartite valide generate: {len(self.matches)}")
+
+        print("\n=== PRIME 10 PARTITE ===")
+
+        for i, match in enumerate(self.matches[:10], start=1):
+            print(f"{i:2d}. {match}")
 
 
 if __name__ == "__main__":

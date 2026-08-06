@@ -32,3 +32,22 @@ AVOID_GRAEME_VS_PAOLA = True
 MAXIMIZE_DIFFERENT_OPPONENTS = True
 MINIMIZE_REMATCHES = True
 BALANCE_MEN = True
+
+
+# Giocatori
+
+MEN = [
+    "Ash",
+    "Graeme",
+    "Quentin",
+    "Mauro",
+]
+
+WOMEN = [
+    "Beth",
+    "Lina",
+    "Maryna",
+    "Matilde",
+    "Paola",
+    "Tiantian",
+]

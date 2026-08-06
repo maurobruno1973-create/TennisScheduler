@@ -12,6 +12,7 @@ from itertools import combinations
 
 import config
 
+from ortools.sat.python import cp_model
 
 # -------------------------
 # Modelli dati
@@ -86,9 +87,23 @@ class TournamentScheduler:
         for i, match in enumerate(self.matches[:10], start=1):
             print(f"{i:2d}. {match}")
 
+    def build_model(self):
+
+        print("\nCreazione modello OR-Tools...")
+
+        self.model = cp_model.CpModel()
+
+        self.match_vars = {}
+
+        for i, match in enumerate(self.matches):
+
+            self.match_vars[i] = self.model.NewBoolVar(f"match_{i}")
+
+        print(f"Variabili create: {len(self.match_vars)}")
 
 if __name__ == "__main__":
 
     scheduler = TournamentScheduler()
 
     scheduler.generate_matches()
+    scheduler.build_model()

@@ -308,6 +308,31 @@ class TournamentScheduler:
       
       print(f"Vincoli creati: {len(self.opponent_count_vars)}")
 
+
+	def add_opponent_played_constraints(self):
+
+	    print("\nCollegamento variabili Opponent Played...")
+	
+	    for key in self.opponent_played_vars:
+	
+	        count_var = self.opponent_count_vars[key]
+	        played_var = self.opponent_played_vars[key]
+	
+	        # Se played = 0 allora count = 0
+	        self.model.Add(count_var == 0).OnlyEnforceIf(
+	            played_var.Not()
+	        )
+	
+	        # Se played = 1 allora count >= 1
+	        self.model.Add(count_var >= 1).OnlyEnforceIf(
+	            played_var
+	        )
+	
+	    print(
+	        f"Vincoli creati: {len(self.opponent_played_vars)}"
+	    )
+
+   
     def add_objective(self):
 
       print("\nFunzione obiettivo")
@@ -431,6 +456,7 @@ if __name__ == "__main__":
     scheduler.build_soft_avoid_variables()
     scheduler.build_opponent_count_variables()
     scheduler.add_opponent_count_constraints()
+	scheduler.add_opponent_played_constraints()
     scheduler.add_basic_constraints()
     scheduler.add_women_constraints()
     scheduler.add_objective()

@@ -163,6 +163,71 @@ class TournamentScheduler:
 
         print(f"Variabili create: {len(self.player_count_vars)}")
 
+    def check_pair_distribution(self):
+
+        num_pairs = len(self.pairs)
+        num_matches = config.NUM_MATCHES
+
+        total_pair_slots = num_matches * 2
+
+        print("\n=== CONTROLLO CONFIGURAZIONE COPPIE ===")
+        print(f"Coppie disponibili:        {num_pairs}")
+        print(f"Partite richieste:         {num_matches}")
+        print(f"Partecipazioni coppie:     {total_pair_slots}")
+
+        # ----------------------------------
+        # Verifica distribuzione uniforme
+        # ----------------------------------
+
+        if total_pair_slots % num_pairs == 0:
+
+            matches_per_pair = (
+                total_pair_slots // num_pairs
+            )
+
+            print(
+                f"Partite per coppia:        "
+                f"{matches_per_pair}"
+            )
+
+            print("Configurazione valida:     OK")
+
+        else:
+
+            print(
+                "Configurazione valida:     ERRORE"
+            )
+
+            print(
+                "Non è possibile assegnare "
+                "lo stesso numero di partite "
+                "a tutte le coppie."
+            )
+
+        # ----------------------------------
+        # Distribuzioni possibili
+        # ----------------------------------
+
+        print("\nDistribuzioni possibili:")
+
+        max_matches_per_pair = 6
+
+        for matches_per_pair in range(
+            1,
+            max_matches_per_pair + 1
+        ):
+
+            required_matches = (
+                num_pairs * matches_per_pair
+            ) // 2
+
+            print(
+                f"{matches_per_pair} partita/e per coppia"
+                f" -> {required_matches} partite"
+            )
+
+
+
     def compute_targets(self):
 
         # ----------------------------------
@@ -185,13 +250,58 @@ class TournamentScheduler:
             total_woman_slots // len(config.WOMEN)
         )
 
+        # ----------------------------------
+        # Target coppie
+        # ----------------------------------
+
+        total_pair_slots = config.NUM_MATCHES * 2
+
+        if total_pair_slots % len(self.pairs) != 0:
+            raise ValueError(
+                "Il numero di partite non permette "
+                "una distribuzione uguale tra tutte le coppie."
+            )
+
+        self.target_pair_matches = (
+            total_pair_slots // len(self.pairs)
+        )
+
         print("\nTarget giocatori")
         print("----------------")
         print(
-            f"Partite per uomo:  {self.target_men_matches}"
+              f"Partite per uomo:   {self.target_men_matches}"
         )
         print(
-            f"Partite per donna: {self.target_women_matches}"
+              f"Partite per donna:  {self.target_women_matches}"
+        )
+        print(
+              f"Partite per coppia: {self.target_pair_matches}"
+        )
+
+    def build_women_deviation_variables(self):
+
+        print("\nCreazione variabili deviazione donne...")
+
+        self.women_deviation_vars = {}
+
+        for woman in config.WOMEN:
+
+            deviation = self.model.NewIntVar(
+                0,
+                config.NUM_MATCHES,
+                f"dev_{woman}"
+            )
+
+            self.model.AddAbsEquality(
+                deviation,
+                self.player_count_vars[woman] - self.target_women_matches
+            )
+
+            self.women_deviation_vars[woman] = deviation
+
+        print(
+            f"Variabili create: "
+            f"{len(self.women_deviation_vars)}"
         )
 
     def build_men_deviation_variables(self):
@@ -375,6 +485,14 @@ class TournamentScheduler:
       objective = 0
 
       # ----------------------------------
+      # Bilanciamento donne
+      # ----------------------------------
+
+      objective += (
+          config.OBJECTIVE_WEIGHTS["WOMEN_BALANCE"]
+          * sum(self.women_deviation_vars.values())
+      )
+      # ----------------------------------
       # Bilanciamento uomini
       # ----------------------------------
 
@@ -413,19 +531,12 @@ class TournamentScheduler:
 
     def add_women_constraints(self):
 
-        print("\nVincolo: tutte le donne giocano lo stesso numero di partite...")
+        print("\nBilanciamento partite donne...")
 
-        women = config.WOMEN
+          # Il numero di partite delle donne NON è un vincolo rigido.
+          # Il bilanciamento viene gestito dalla funzione obiettivo.
 
-        for i in range(len(women) - 1):
-            self.model.Add(
-                self.player_count_vars[women[i]]
-                ==
-                self.player_count_vars[women[i + 1]]
-            )
-
-        print("Vincolo aggiunto.")
-
+        print("Bilanciamento donne impostato come obiettivo soft.")
 
     def add_basic_constraints(self):
 
@@ -437,6 +548,29 @@ class TournamentScheduler:
 
         print(f"Numero partite da selezionare: {config.NUM_MATCHES}")
 
+
+        # ----------------------------------
+        # Vincolo partite per coppia
+        # ----------------------------------
+
+        if config.ENFORCE_EQUAL_PAIR_MATCHES:
+
+            for pair in self.pairs:
+
+                pair_match_count = sum(
+                    self.match_vars[i]
+                    for i, match in enumerate(self.matches)
+                    if match.pair1 == pair or match.pair2 == pair
+                )
+
+                self.model.Add(
+                    pair_match_count == self.target_pair_matches
+                )
+
+            print(
+                "Vincolo: tutte le coppie giocano "
+                "lo stesso numero di partite..."
+            )
 
     def solve(self):
 

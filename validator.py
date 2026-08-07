@@ -92,7 +92,7 @@ def validate_solution(
             end=""
         )
 
-        if count == config.TARGET_MATCHES_PER_WOMAN:
+        if count == scheduler.target_women_matches:
             print("   OK")
         else:
             print("   ERRORE")

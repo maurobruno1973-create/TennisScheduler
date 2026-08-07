@@ -1,7 +1,7 @@
 """
 Tennis Mixed Doubles Scheduler
 
-Versione 0.5
+Versione 0.13
 
 Motore del programma.
 Tutti i dati del torneo vengono letti da config.py
@@ -100,13 +100,6 @@ class TournamentScheduler:
         print(f"Partite uniche: {len(unique_matches)}")
         print(f"Partite duplicate: {duplicates}")
 
-        print("\n=== PRIME 10 PARTITE ===")
-
-        for i, match in enumerate(
-            self.matches[:10],
-            start=1
-        ):
-            print(f"{i:2d}. {match}")
 
     def build_model(self):
 
@@ -172,15 +165,34 @@ class TournamentScheduler:
 
     def compute_targets(self):
 
+        # ----------------------------------
+        # Target uomini
+        # ----------------------------------
+
         total_male_slots = config.NUM_MATCHES * 2
 
         self.target_men_matches = (
             total_male_slots // len(config.MEN)
         )
 
-        print("\nTarget uomini")
+        # ----------------------------------
+        # Target donne
+        # ----------------------------------
+
+        total_woman_slots = config.NUM_MATCHES * 2
+
+        self.target_women_matches = (
+            total_woman_slots // len(config.WOMEN)
+        )
+
+        print("\nTarget giocatori")
         print("----------------")
-        print(f"Partite per uomo: {self.target_men_matches}")
+        print(
+            f"Partite per uomo:  {self.target_men_matches}"
+        )
+        print(
+            f"Partite per donna: {self.target_women_matches}"
+        )
 
     def build_men_deviation_variables(self):
 
@@ -447,3 +459,4 @@ class TournamentScheduler:
         validate_solution(self, solver)
 
         return solver
+

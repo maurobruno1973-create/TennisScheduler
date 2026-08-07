@@ -340,7 +340,7 @@ def create_excel_report(scheduler, solver):
 
             gender = "F"
 
-            target = config.TARGET_MATCHES_PER_WOMAN
+            target = scheduler.target_women_matches
 
             deviation = 0
 

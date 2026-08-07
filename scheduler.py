@@ -446,3 +446,4 @@ class TournamentScheduler:
 
         validate_solution(self, solver)
 
+        return solver

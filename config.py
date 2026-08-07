@@ -28,11 +28,16 @@ PAIRS = [
 TARGET_MATCHES_PER_WOMAN = 6
 
 # Preferenze (non vincoli rigidi)
-AVOID_GRAEME_VS_PAOLA = True
+
+# Coppie di giocatori che si preferisce NON far incontrare
+# come avversari.
+SOFT_AVOID_OPPONENTS = [
+    ("Graeme", "Paola"),
+]
+
 MAXIMIZE_DIFFERENT_OPPONENTS = True
 MINIMIZE_REMATCHES = True
 BALANCE_MEN = True
-
 
 # Giocatori
 

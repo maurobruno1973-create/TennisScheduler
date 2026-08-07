@@ -3,7 +3,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 import config
-
+import openpyxl
 
 def create_excel_report(scheduler, solver):
 
@@ -195,9 +195,10 @@ def create_excel_report(scheduler, solver):
     ws = wb.create_sheet("Partite")
 
     headers = [
-        "N.",
-        "Coppia 1",
-        "Coppia 2",
+      "N.",
+      "Coppia 1",
+      "Coppia 2",
+      "Partite per Coppia"
     ]
 
     for col, header in enumerate(headers, start=1):
@@ -239,7 +240,13 @@ def create_excel_report(scheduler, solver):
                 column=3
             ).value = str(match.pair2)
 
-            for col in range(1, 4):
+            # Numero di partite previsto per ogni coppia
+            ws.cell(
+                row=row,
+                column=4
+            ).value = scheduler.target_pair_matches
+
+            for col in range(1, 5):
 
                 cell = ws.cell(
                     row=row,
@@ -255,6 +262,13 @@ def create_excel_report(scheduler, solver):
                 horizontal="center"
             )
 
+            ws.cell(
+                row=row,
+                column=4
+            ).alignment = Alignment(
+                horizontal="center"
+            )
+
             row += 1
             match_number += 1
 
@@ -264,8 +278,8 @@ def create_excel_report(scheduler, solver):
 
         table = Table(
             displayName="MatchesTable",
-            ref=f"A1:C{last_row}"
-        )
+            ref=f"A1:D{last_row}"
+          )
 
         style = TableStyleInfo(
             name="TableStyleMedium2",
@@ -284,6 +298,7 @@ def create_excel_report(scheduler, solver):
     ws.column_dimensions["A"].width = 8
     ws.column_dimensions["B"].width = 28
     ws.column_dimensions["C"].width = 28
+    ws.column_dimensions["D"].width = 20
 
     ws.sheet_view.showGridLines = False
 
@@ -428,7 +443,6 @@ def create_excel_report(scheduler, solver):
     headers = [
         "Giocatore",
         "Avversari diversi",
-        "Elenco avversari",
     ]
 
     for col, header in enumerate(headers, start=1):
@@ -471,7 +485,7 @@ def create_excel_report(scheduler, solver):
         values = [
             player,
             len(opponents),
-            ", ".join(sorted(opponents)),
+            
         ]
 
         for col, value in enumerate(values, start=1):
@@ -495,14 +509,6 @@ def create_excel_report(scheduler, solver):
             horizontal="center"
         )
 
-        ws.cell(
-            row=row,
-            column=3
-        ).alignment = Alignment(
-            vertical="top",
-            wrap_text=True
-        )
-
         row += 1
 
     last_row = row - 1
@@ -511,7 +517,7 @@ def create_excel_report(scheduler, solver):
 
         table = Table(
             displayName="OpponentsTable",
-            ref=f"A1:C{last_row}"
+            ref=f"A1:B{last_row}"
         )
 
         style = TableStyleInfo(
@@ -530,9 +536,35 @@ def create_excel_report(scheduler, solver):
 
     ws.column_dimensions["A"].width = 20
     ws.column_dimensions["B"].width = 20
-    ws.column_dimensions["C"].width = 65
 
     ws.sheet_view.showGridLines = False
+
+    # ==================================================
+    # CONTROLLO INTESTAZIONI TABELLE
+    # ==================================================
+
+    for ws in wb.worksheets:
+
+        for table in ws.tables.values():
+
+            print(f"\nControllo tabella: {ws.title} / {table.name}")
+
+            min_col, min_row, max_col, max_row = (
+                openpyxl.utils.range_boundaries(table.ref)
+            )
+
+            for col in range(min_col, max_col + 1):
+
+                value = ws.cell(
+                    row=min_row,
+                    column=col
+                ).value
+
+                print(
+                    f"  Colonna {col}: "
+                    f"{repr(value)} "
+                    f"({type(value).__name__})"
+                )
 
     # ==================================================
     # SALVATAGGIO

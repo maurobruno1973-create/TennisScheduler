@@ -26,6 +26,7 @@ PAIRS = [
 ]
 
 # Vincoli principali
+ENFORCE_EQUAL_PAIR_MATCHES = False
 
 # Preferenze (non vincoli rigidi)
 
@@ -39,8 +40,9 @@ MAXIMIZE_DIFFERENT_OPPONENTS = True
 BALANCE_MEN = True
 
 OBJECTIVE_WEIGHTS = {
-    "MEN_BALANCE": 100,
-    "SOFT_AVOID_OPPONENTS": 50,
+    "WOMEN_BALANCE": 100,
+    "MEN_BALANCE": 50,
+    "SOFT_AVOID_OPPONENTS": 10,
     "DIFFERENT_OPPONENTS": 1,
 }
 

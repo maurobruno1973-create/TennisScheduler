@@ -1,7 +1,7 @@
 """
 Tennis Mixed Doubles Scheduler
 
-Versione 0.13
+Versione 0.15
 
 Motore del programma.
 Tutti i dati del torneo vengono letti da config.py
@@ -65,10 +65,10 @@ class TournamentScheduler:
 
         self.matches = generate_matches(self.pairs)
 
-        print("\n=== COPPIE DISPONIBILI ===")
+        #print("\n=== COPPIE DISPONIBILI ===")
 
-        for i, pair in enumerate(self.pairs, start=1):
-            print(f"{i:2d}. {pair}")
+        #for i, pair in enumerate(self.pairs, start=1):
+        #    print(f"{i:2d}. {pair}")
 
         print("\nGenerazione partite...")
 
@@ -117,7 +117,7 @@ class TournamentScheduler:
 
     def build_player_counters(self):
 
-        print("\nCreazione contatori giocatori...")
+        #print("\nCreazione contatori giocatori...")
 
         self.player_matches = {}
 
@@ -141,7 +141,7 @@ class TournamentScheduler:
             for player in players:
                 self.player_matches[player].append(self.match_vars[i])
 
-        print("Contatori creati.")
+        #print("Contatori creati.")
 
     def build_player_count_variables(self):
 
@@ -280,7 +280,7 @@ class TournamentScheduler:
 
     def build_women_deviation_variables(self):
 
-        print("\nCreazione variabili deviazione donne...")
+        #print("\nCreazione variabili deviazione donne...")
 
         self.women_deviation_vars = {}
 
@@ -299,14 +299,14 @@ class TournamentScheduler:
 
             self.women_deviation_vars[woman] = deviation
 
-        print(
-            f"Variabili create: "
-            f"{len(self.women_deviation_vars)}"
-        )
+        #print(
+        #    f"Variabili create: "
+        #    f"{len(self.women_deviation_vars)}"
+        #)
 
     def build_men_deviation_variables(self):
 
-        print("\nCreazione variabili deviazione uomini...")
+        #print("\nCreazione variabili deviazione uomini...")
 
         self.men_deviation_vars = {}
 
@@ -325,7 +325,7 @@ class TournamentScheduler:
 
             self.men_deviation_vars[man] = deviation
 
-        print(f"Variabili create: {len(self.men_deviation_vars)}")
+        #print(f"Variabili create: {len(self.men_deviation_vars)}")
 
     def build_soft_avoid_variables(self):
 
@@ -357,22 +357,22 @@ class TournamentScheduler:
 
         print(f"Partite penalizzate: {len(self.soft_avoid_vars)}")
 
-        if self.soft_avoid_vars:
+        #if self.soft_avoid_vars:
 
-            print("\nElenco:")
+            #print("\nElenco:")
 
-            for i, match in enumerate(self.matches):
+            #for i, match in enumerate(self.matches):
 
-                pair1 = (match.pair1.man, match.pair1.woman)
-                pair2 = (match.pair2.man, match.pair2.woman)
+            #    pair1 = (match.pair1.man, match.pair1.woman)
+            #    pair2 = (match.pair2.man, match.pair2.woman)
 
-                for p1, p2 in config.SOFT_AVOID_OPPONENTS:
+            #    for p1, p2 in config.SOFT_AVOID_OPPONENTS:
 
-                    cond1 = (p1 in pair1) and (p2 in pair2)
-                    cond2 = (p2 in pair1) and (p1 in pair2)
+            #        cond1 = (p1 in pair1) and (p2 in pair2)
+            #        cond2 = (p2 in pair1) and (p1 in pair2)
 
-                    if cond1 or cond2:
-                        print(f" - {match}")
+            #        if cond1 or cond2:
+            #            print(f" - {match}")
     
     def build_opponent_count_variables(self):
 
@@ -425,7 +425,7 @@ class TournamentScheduler:
 
     def add_opponent_count_constraints(self):
 
-      print("\nCollegamento Opponent Matrix...")
+      #print("\nCollegamento Opponent Matrix...")
 
       for (p1, p2), count_var in self.opponent_count_vars.items():
 
@@ -451,12 +451,12 @@ class TournamentScheduler:
             count_var == sum(opponent_matches)
         )
       
-      print(f"Vincoli creati: {len(self.opponent_count_vars)}")
+      #print(f"Vincoli creati: {len(self.opponent_count_vars)}")
 
 
     def add_opponent_played_constraints(self):
 
-      print("\nCollegamento variabili Opponent Played...")
+      #print("\nCollegamento variabili Opponent Played...")
 
       for key in self.opponent_played_vars:
 
@@ -473,14 +473,14 @@ class TournamentScheduler:
               played_var
           )
 
-      print(
-          f"Vincoli creati: {len(self.opponent_played_vars)}"
-      )
+      #print(
+      #    f"Vincoli creati: {len(self.opponent_played_vars)}"
+      #)
 
    
     def add_objective(self):
 
-      print("\nFunzione obiettivo")
+      #print("\nFunzione obiettivo")
 
       objective = 0
 
@@ -527,16 +527,7 @@ class TournamentScheduler:
 
       self.model.Minimize(objective)
 
-      print("Funzione obiettivo impostata.")
-
-    def add_women_constraints(self):
-
-        print("\nBilanciamento partite donne...")
-
-          # Il numero di partite delle donne NON è un vincolo rigido.
-          # Il bilanciamento viene gestito dalla funzione obiettivo.
-
-        print("Bilanciamento donne impostato come obiettivo soft.")
+      #print("Funzione obiettivo impostata.")
 
     def add_basic_constraints(self):
 

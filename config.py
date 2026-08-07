@@ -4,12 +4,13 @@ Modifica solo questo file se cambiano coppie o parametri.
 """
 
 # Numero di partite da selezionare
-NUM_MATCHES = 18
+NUM_MATCHES = 24
 
 # Coppie disponibili (Uomo, Donna)
 PAIRS = [
     ("Ash", "Tiantian"),
     ("Ash", "Lina"),
+    ("Ash", "Maryna"),
 
     ("Graeme", "Beth"),
     ("Graeme", "Matilde"),
@@ -17,7 +18,7 @@ PAIRS = [
 
     ("Quentin", "Tiantian"),
     ("Quentin", "Maryna"),
-    ("Quentin", "Matilde"),
+    ("Quentin", "Paola"),
 
     ("Mauro", "Beth"),
     ("Mauro", "Paola"),
@@ -25,7 +26,6 @@ PAIRS = [
 ]
 
 # Vincoli principali
-TARGET_MATCHES_PER_WOMAN = 6
 
 # Preferenze (non vincoli rigidi)
 

@@ -459,6 +459,54 @@ class TournamentScheduler:
 
         print("Soluzione trovata.\n")
 
+        print("=== CONTRIBUTO FUNZIONE OBIETTIVO ===")
+
+        men_balance = (
+            config.OBJECTIVE_WEIGHTS["MEN_BALANCE"]
+            * sum(
+                  solver.Value(var)
+                  for var in self.men_deviation_vars.values()
+            )
+        )
+
+        soft_avoid = (
+            config.OBJECTIVE_WEIGHTS["SOFT_AVOID_OPPONENTS"]
+            * sum(
+                  solver.Value(var)
+                  for var in self.soft_avoid_vars
+            )
+        )
+
+        different_opponents = (
+            config.OBJECTIVE_WEIGHTS["DIFFERENT_OPPONENTS"]
+            * sum(
+                  solver.Value(var)
+                  for var in self.opponent_played_vars.values()
+            )
+        )
+
+        print(
+            f"Bilanciamento uomini:       {men_balance}"
+        )
+
+        print(
+            f"Incontri da evitare:        {soft_avoid}"
+        )
+
+        print(
+            f"Avversari diversi:         -{different_opponents}"
+        )
+
+        print("-------------------------------")
+
+        print(
+            f"Totale obiettivo:           "
+            f"{men_balance + soft_avoid - different_opponents}"
+        )
+
+
+
+
         print("=== PARTITE SELEZIONATE ===")
 
         count = 1

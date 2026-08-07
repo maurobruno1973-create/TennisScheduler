@@ -7,44 +7,23 @@ Motore del programma.
 Tutti i dati del torneo vengono letti da config.py
 """
 
-from dataclasses import dataclass
-from itertools import combinations
 
 import config
 
+from models import Pair, Match
+
+from match_generator import generate_matches
+from validator import validate_solution
+from reporter import report_solution
+from reporter import report_solution
+
 from ortools.sat.python import cp_model
 
-# -------------------------
-# Modelli dati
-# -------------------------
-
-@dataclass(frozen=True)
-class Pair:
-    man: str
-    woman: str
-
-    @property
-    def players(self):
-        return {self.man, self.woman}
-
-    def __str__(self):
-        return f"{self.man} - {self.woman}"
 
 
-@dataclass(frozen=True)
-class Match:
-    pair1: Pair
-    pair2: Pair
-
-    @property
-    def players(self):
-        return self.pair1.players | self.pair2.players
-
-    def is_valid(self):
-        return len(self.players) == 4
-
-    def __str__(self):
-        return f"{self.pair1}   vs   {self.pair2}"
+# --------------------------------------
+# Modelli dati rimossi aggiunti in model
+# --------------------------------------
 
 
 # -------------------------
@@ -84,7 +63,7 @@ class TournamentScheduler:
 
     def generate_matches(self):
 
-        self.matches = []
+        self.matches = generate_matches(self.pairs)
 
         print("\n=== COPPIE DISPONIBILI ===")
 
@@ -93,14 +72,10 @@ class TournamentScheduler:
 
         print("\nGenerazione partite...")
 
-        for p1, p2 in combinations(self.pairs, 2):
-
-            match = Match(p1, p2)
-
-            if match.is_valid():
-                self.matches.append(match)
-
-        print(f"\nPartite valide generate: {len(self.matches)}")
+        print(
+            f"\nPartite valide generate: "
+            f"{len(self.matches)}"
+        )
 
         # ----------------------------------
         # Verifica partite duplicate
@@ -117,15 +92,20 @@ class TournamentScheduler:
 
             unique_matches.add(key)
 
-        duplicates = len(self.matches) - len(unique_matches)
+        duplicates = (
+            len(self.matches)
+            - len(unique_matches)
+        )
 
         print(f"Partite uniche: {len(unique_matches)}")
         print(f"Partite duplicate: {duplicates}")
 
-
         print("\n=== PRIME 10 PARTITE ===")
 
-        for i, match in enumerate(self.matches[:10], start=1):
+        for i, match in enumerate(
+            self.matches[:10],
+            start=1
+        ):
             print(f"{i:2d}. {match}")
 
     def build_model(self):
@@ -445,212 +425,6 @@ class TournamentScheduler:
 
         print(f"Numero partite da selezionare: {config.NUM_MATCHES}")
 
-    def validate_solution(self, solver):
-
-        print("\n=== VERIFICA SOLUZIONE ===")
-
-        errors = []
-
-        # ----------------------------------
-        # Numero di partite
-        # ----------------------------------
-
-        selected_matches = [
-            i
-            for i, var in self.match_vars.items()
-            if solver.Value(var)
-        ]
-
-        selected_count = len(selected_matches)
-
-        print(
-            f"Partite selezionate       : "
-            f"{selected_count} / {config.NUM_MATCHES}",
-            end=""
-        )
-
-        if selected_count == config.NUM_MATCHES:
-            print("   OK")
-        else:
-            print("   ERRORE")
-            errors.append("Numero partite errato")
-
-        # ----------------------------------
-        # Partite duplicate
-        # ----------------------------------
-
-        unique_matches = set()
-
-        for i in selected_matches:
-
-            match = self.matches[i]
-
-            pair1 = str(match.pair1)
-            pair2 = str(match.pair2)
-
-            key = tuple(sorted((pair1, pair2)))
-
-            unique_matches.add(key)
-
-        duplicates = selected_count - len(unique_matches)
-
-        print(
-            f"Partite duplicate         : "
-            f"{duplicates}",
-            end=""
-        )
-
-        if duplicates == 0:
-            print("   OK")
-        else:
-            print("   ERRORE")
-            errors.append("Partite duplicate")
-
-        # ----------------------------------
-        # Partite per donna
-        # ----------------------------------
-
-        print("\nPARTITE PER DONNA")
-
-        for woman in config.WOMEN:
-
-            count = 0
-
-            for i in selected_matches:
-
-                match = self.matches[i]
-
-                players = (
-                    list(match.pair1.players)
-                    + list(match.pair2.players)
-                )
-
-                if woman in players:
-                    count += 1
-
-            print(
-                f"{woman:25}: {count}",
-                end=""
-            )
-
-            if count == config.TARGET_MATCHES_PER_WOMAN:
-                print("   OK")
-            else:
-                print("   ERRORE")
-                errors.append(
-                    f"Numero partite errato per {woman}"
-                )
-
-        # ----------------------------------
-        # Partite per uomo
-        # ----------------------------------
-
-        print("\nPARTITE PER UOMO")
-
-        for man in config.MEN:
-
-            count = 0
-
-            for i in selected_matches:
-
-                match = self.matches[i]
-
-                players = (
-                    list(match.pair1.players)
-                    + list(match.pair2.players)
-                )
-
-                if man in players:
-                    count += 1
-
-            target = self.target_men_matches
-
-            deviation = abs(count - target)
-
-            print(
-                f"{man:25}: {count} "
-                f"(target {target}, deviazione {deviation})"
-            )
-
-        # ----------------------------------
-        # Giocatore contro se stesso
-        # ----------------------------------
-
-        self_match_errors = 0
-
-        for i in selected_matches:
-
-            match = self.matches[i]
-
-            team1 = set(match.pair1.players)
-            team2 = set(match.pair2.players)
-
-            if team1 & team2:
-                self_match_errors += 1
-
-        print(
-            f"\nGiocatori contro se stessi: "
-            f"{self_match_errors}",
-            end=""
-        )
-
-        if self_match_errors == 0:
-            print("   OK")
-        else:
-            print("   ERRORE")
-            errors.append(
-                "Giocatori contro se stessi"
-            )
-
-        # ----------------------------------
-        # Incontri indesiderati
-        # ----------------------------------
-
-        soft_avoid_count = 0
-
-        for var in self.soft_avoid_vars:
-
-            if solver.Value(var):
-                soft_avoid_count += 1
-
-        print(
-            f"Incontri indesiderati     : "
-            f"{soft_avoid_count}"
-        )
-
-        # ----------------------------------
-        # Avversari diversi
-        # ----------------------------------
-
-        different_opponents = sum(
-            solver.Value(var)
-            for var in self.opponent_played_vars.values()
-        )
-
-        print(
-            f"Avversari diversi         : "
-            f"{different_opponents}"
-        )
-
-        # ----------------------------------
-        # Risultato finale
-        # ----------------------------------
-
-        print("\n==========================================")
-
-        if errors:
-            print("VERIFICA FINALE: ERRORE")
-
-            for error in errors:
-                print(f" - {error}")
-
-        else:
-            print("VERIFICA FINALE: OK")
-
-        print("==========================================")
-
-
-
 
     def solve(self):
 
@@ -661,137 +435,14 @@ class TournamentScheduler:
         status = solver.Solve(self.model)
 
         if status != cp_model.OPTIMAL:
+
             print("Nessuna soluzione.")
+
             return
 
         print("Soluzione trovata.\n")
 
-        print("=== CONTRIBUTO FUNZIONE OBIETTIVO ===")
+        report_solution(self, solver)
 
-        men_balance = (
-            config.OBJECTIVE_WEIGHTS["MEN_BALANCE"]
-            * sum(
-                  solver.Value(var)
-                  for var in self.men_deviation_vars.values()
-            )
-        )
+        validate_solution(self, solver)
 
-        soft_avoid = (
-            config.OBJECTIVE_WEIGHTS["SOFT_AVOID_OPPONENTS"]
-            * sum(
-                  solver.Value(var)
-                  for var in self.soft_avoid_vars
-            )
-        )
-
-        different_opponents = (
-            config.OBJECTIVE_WEIGHTS["DIFFERENT_OPPONENTS"]
-            * sum(
-                  solver.Value(var)
-                  for var in self.opponent_played_vars.values()
-            )
-        )
-
-        print(
-            f"Bilanciamento uomini:       {men_balance}"
-        )
-
-        print(
-            f"Incontri da evitare:        {soft_avoid}"
-        )
-
-        print(
-            f"Avversari diversi:         -{different_opponents}"
-        )
-
-        print("-------------------------------")
-
-        print(
-            f"Totale obiettivo:           "
-            f"{men_balance + soft_avoid - different_opponents}"
-        )
-
-        print("=== PARTITE SELEZIONATE ===")
-
-        count = 1
-
-        for i, match in enumerate(self.matches):
-
-            if solver.Value(self.match_vars[i]):
-
-                print(f"{count:2d}. {match}")
-
-                count += 1
-
-        print("\n=== PARTITE PER GIOCATORE ===")
-
-        for player in sorted(self.player_count_vars):
-
-            print(
-                f"{player:10} "
-                f"{solver.Value(self.player_count_vars[player])}"
-            )
-
-
-        print("\n=== AVVERSARI DIVERSI ===")
-
-        for player in sorted(self.player_count_vars):
-
-            opponents = set()
-
-            for (p1, p2), played_var in self.opponent_played_vars.items():
-
-                if solver.Value(played_var):
-
-                    if player == p1:
-                       opponents.add(p2)
-
-                    elif player == p2:
-                       opponents.add(p1)
-
-            print(
-                f"{player:10} "
-                f"{len(opponents)} -> "
-                f"{', '.join(sorted(opponents))}"
-            )
-
-        print("\n=== DEVIAZIONE UOMINI ===")
-
-        total = 0
-
-        for man in config.MEN:
-
-            dev = solver.Value(self.men_deviation_vars[man])
-
-            print(f"{man:10} {dev}")
-
-            total += dev
-
-        print("----------------------")
-        print(f"Totale      {total}")
-
-        self.validate_solution(solver)
-
-
-if __name__ == "__main__":
-
-    scheduler = TournamentScheduler()
-
-    scheduler.generate_matches()
-    scheduler.build_model()
-    scheduler.build_player_counters()
-    scheduler.build_player_count_variables()
-    scheduler.compute_targets()
-
-    scheduler.build_men_deviation_variables()
-    scheduler.build_soft_avoid_variables()
-    scheduler.build_opponent_count_variables()
-    scheduler.build_opponent_played_variables()
-
-    scheduler.add_opponent_count_constraints()
-    scheduler.add_opponent_played_constraints()
-    scheduler.add_basic_constraints()
-    scheduler.add_women_constraints()
-    scheduler.add_objective()
-    
-    scheduler.solve()

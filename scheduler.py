@@ -102,6 +102,27 @@ class TournamentScheduler:
 
         print(f"\nPartite valide generate: {len(self.matches)}")
 
+        # ----------------------------------
+        # Verifica partite duplicate
+        # ----------------------------------
+
+        unique_matches = set()
+
+        for match in self.matches:
+
+            pair1 = str(match.pair1)
+            pair2 = str(match.pair2)
+
+            key = tuple(sorted((pair1, pair2)))
+
+            unique_matches.add(key)
+
+        duplicates = len(self.matches) - len(unique_matches)
+
+        print(f"Partite uniche: {len(unique_matches)}")
+        print(f"Partite duplicate: {duplicates}")
+
+
         print("\n=== PRIME 10 PARTITE ===")
 
         for i, match in enumerate(self.matches[:10], start=1):
@@ -366,8 +387,8 @@ class TournamentScheduler:
       # ----------------------------------
 
       objective += (
-        config.OBJECTIVE_WEIGHTS["MEN_BALANCE"]
-        * sum(self.men_deviation_vars.values())
+          config.OBJECTIVE_WEIGHTS["MEN_BALANCE"]
+          * sum(self.men_deviation_vars.values())
       )
 
       # ----------------------------------
@@ -375,14 +396,28 @@ class TournamentScheduler:
       # ----------------------------------
 
       objective += (
-        config.OBJECTIVE_WEIGHTS["SOFT_AVOID_OPPONENTS"]
-        * sum(self.soft_avoid_vars)
+          config.OBJECTIVE_WEIGHTS["SOFT_AVOID_OPPONENTS"]
+          * sum(self.soft_avoid_vars)
+      )
+
+      # ----------------------------------
+      # Massimizzare avversari diversi
+      # ----------------------------------
+      # opponent_played_vars vale:
+      #   1 = i due giocatori si sono affrontati
+      #   0 = non si sono mai affrontati
+      #
+      # Poiché il modello MINIMIZZA, sottraiamo
+      # il numero di avversari diversi.
+
+      objective -= (
+          config.OBJECTIVE_WEIGHTS["DIFFERENT_OPPONENTS"]
+          * sum(self.opponent_played_vars.values())
       )
 
       self.model.Minimize(objective)
 
       print("Funzione obiettivo impostata.")
-
 
     def add_women_constraints(self):
 
@@ -445,7 +480,29 @@ class TournamentScheduler:
                 f"{solver.Value(self.player_count_vars[player])}"
             )
 
-            
+
+        print("\n=== AVVERSARI DIVERSI ===")
+
+        for player in sorted(self.player_count_vars):
+
+            opponents = set()
+
+            for (p1, p2), played_var in self.opponent_played_vars.items():
+
+                if solver.Value(played_var):
+
+                    if player == p1:
+                       opponents.add(p2)
+
+                    elif player == p2:
+                       opponents.add(p1)
+
+            print(
+                f"{player:10} "
+                f"{len(opponents)} -> "
+                f"{', '.join(sorted(opponents))}"
+            )
+
         print("\n=== DEVIAZIONE UOMINI ===")
 
         total = 0

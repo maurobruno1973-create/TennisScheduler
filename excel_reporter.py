@@ -1,6 +1,6 @@
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.table import Table, TableStyleInfo
 
 import config
 
@@ -11,9 +11,57 @@ def create_excel_report(scheduler, solver):
 
     wb = Workbook()
 
-    # Rimuove il foglio iniziale
+    # ==================================================
+    # RIMOZIONE FOGLIO INIZIALE
+    # ==================================================
+
     ws = wb.active
     wb.remove(ws)
+
+    # ==================================================
+    # STILI
+    # ==================================================
+
+    title_font = Font(
+        size=18,
+        bold=True
+    )
+
+    subtitle_font = Font(
+        size=11,
+        italic=True
+    )
+
+    header_font = Font(
+        bold=True
+    )
+
+    header_fill = PatternFill(
+        fill_type="solid",
+        fgColor="D9EAF7"
+    )
+
+    ok_fill = PatternFill(
+        fill_type="solid",
+        fgColor="C6EFCE"
+    )
+
+    warning_fill = PatternFill(
+        fill_type="solid",
+        fgColor="FFF2CC"
+    )
+
+    alternate_fill = PatternFill(
+        fill_type="solid",
+        fgColor="F7F7F7"
+    )
+
+    thin_border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
 
     # ==================================================
     # RIEPILOGO
@@ -22,43 +70,123 @@ def create_excel_report(scheduler, solver):
     ws = wb.create_sheet("Riepilogo")
 
     ws["A1"] = "TENNIS SCHEDULER"
-    ws["A1"].font = Font(size=18, bold=True)
+    ws["A1"].font = title_font
 
-    ws["A3"] = "Partite selezionate"
-    ws["B3"] = sum(
+    ws["A2"] = "Risultato torneo"
+    ws["A2"].font = subtitle_font
+
+    ws["A4"] = "Voce"
+    ws["B4"] = "Risultato"
+
+    for cell in ws[4]:
+
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+    selected_matches = sum(
         solver.Value(var)
         for var in scheduler.match_vars.values()
     )
 
-    ws["A4"] = "Partite richieste"
-    ws["B4"] = config.NUM_MATCHES
+    duplicate_matches = 0
 
-    ws["A5"] = "Partite duplicate"
-    ws["B5"] = 0
-
-    ws["A7"] = "Deviazione totale uomini"
-    ws["B7"] = sum(
+    men_deviation = sum(
         solver.Value(var)
         for var in scheduler.men_deviation_vars.values()
     )
 
-    ws["A8"] = "Incontri indesiderati"
-    ws["B8"] = sum(
+    soft_avoid = sum(
         solver.Value(var)
         for var in scheduler.soft_avoid_vars
     )
 
-    ws["A9"] = "Avversari diversi"
-    ws["B9"] = sum(
+    different_opponents = sum(
         solver.Value(var)
         for var in scheduler.opponent_played_vars.values()
     )
 
-    ws["A11"] = "Verifica finale"
-    ws["B11"] = "OK"
+    summary = [
+        (
+            "Partite selezionate",
+            f"{selected_matches} / {config.NUM_MATCHES}"
+        ),
+        (
+            "Partite duplicate",
+            duplicate_matches
+        ),
+        (
+            "Deviazione uomini",
+            men_deviation
+        ),
+        (
+            "Incontri indesiderati",
+            soft_avoid
+        ),
+        (
+            "Avversari diversi",
+            different_opponents
+        ),
+        (
+            "Verifica finale",
+            "OK"
+        ),
+    ]
+
+    row = 5
+
+    for label, value in summary:
+
+        ws.cell(
+            row=row,
+            column=1
+        ).value = label
+
+        ws.cell(
+            row=row,
+            column=2
+        ).value = value
+
+        ws.cell(
+            row=row,
+            column=1
+        ).border = thin_border
+
+        ws.cell(
+            row=row,
+            column=2
+        ).border = thin_border
+
+        if label == "Verifica finale":
+
+            ws.cell(
+                row=row,
+                column=2
+            ).font = Font(bold=True)
+
+            ws.cell(
+                row=row,
+                column=2
+            ).fill = ok_fill
+
+            ws.cell(
+                row=row,
+                column=2
+            ).alignment = Alignment(
+                horizontal="center"
+            )
+
+        row += 1
 
     ws.column_dimensions["A"].width = 30
     ws.column_dimensions["B"].width = 20
+
+    ws.sheet_view.showGridLines = False
 
     # ==================================================
     # PARTITE
@@ -73,9 +201,21 @@ def create_excel_report(scheduler, solver):
     ]
 
     for col, header in enumerate(headers, start=1):
-        cell = ws.cell(row=1, column=col)
+
+        cell = ws.cell(
+            row=1,
+            column=col
+        )
+
         cell.value = header
-        cell.font = Font(bold=True)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
 
     row = 2
     match_number = 1
@@ -84,12 +224,68 @@ def create_excel_report(scheduler, solver):
 
         if solver.Value(scheduler.match_vars[i]):
 
-            ws.cell(row=row, column=1).value = match_number
-            ws.cell(row=row, column=2).value = str(match.pair1)
-            ws.cell(row=row, column=3).value = str(match.pair2)
+            ws.cell(
+                row=row,
+                column=1
+            ).value = match_number
+
+            ws.cell(
+                row=row,
+                column=2
+            ).value = str(match.pair1)
+
+            ws.cell(
+                row=row,
+                column=3
+            ).value = str(match.pair2)
+
+            for col in range(1, 4):
+
+                cell = ws.cell(
+                    row=row,
+                    column=col
+                )
+
+                cell.border = thin_border
+
+            ws.cell(
+                row=row,
+                column=1
+            ).alignment = Alignment(
+                horizontal="center"
+            )
 
             row += 1
             match_number += 1
+
+    last_row = row - 1
+
+    if last_row >= 2:
+
+        table = Table(
+            displayName="MatchesTable",
+            ref=f"A1:C{last_row}"
+        )
+
+        style = TableStyleInfo(
+            name="TableStyleMedium2",
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=False
+        )
+
+        table.tableStyleInfo = style
+
+        ws.add_table(table)
+
+    ws.freeze_panes = "A2"
+
+    ws.column_dimensions["A"].width = 8
+    ws.column_dimensions["B"].width = 28
+    ws.column_dimensions["C"].width = 28
+
+    ws.sheet_view.showGridLines = False
 
     # ==================================================
     # GIOCATORI
@@ -106,9 +302,21 @@ def create_excel_report(scheduler, solver):
     ]
 
     for col, header in enumerate(headers, start=1):
-        cell = ws.cell(row=1, column=col)
+
+        cell = ws.cell(
+            row=1,
+            column=col
+        )
+
         cell.value = header
-        cell.font = Font(bold=True)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
 
     row = 2
 
@@ -119,28 +327,97 @@ def create_excel_report(scheduler, solver):
         )
 
         if player in config.MEN:
+
             gender = "M"
+
             target = scheduler.target_men_matches
 
-            if player in scheduler.men_deviation_vars:
-                deviation = solver.Value(
-                    scheduler.men_deviation_vars[player]
-                )
-            else:
-                deviation = 0
+            deviation = solver.Value(
+                scheduler.men_deviation_vars[player]
+            )
 
         else:
+
             gender = "F"
+
             target = config.TARGET_MATCHES_PER_WOMAN
+
             deviation = 0
 
-        ws.cell(row=row, column=1).value = player
-        ws.cell(row=row, column=2).value = gender
-        ws.cell(row=row, column=3).value = count
-        ws.cell(row=row, column=4).value = target
-        ws.cell(row=row, column=5).value = deviation
+        values = [
+            player,
+            gender,
+            count,
+            target,
+            deviation,
+        ]
+
+        for col, value in enumerate(values, start=1):
+
+            cell = ws.cell(
+                row=row,
+                column=col
+            )
+
+            cell.value = value
+            cell.border = thin_border
+
+            if row % 2 == 0:
+
+                cell.fill = alternate_fill
+
+        # Evidenzia eventuale deviazione
+
+        if deviation != 0:
+
+            ws.cell(
+                row=row,
+                column=5
+            ).fill = warning_fill
+
+        # Allineamento colonne numeriche
+
+        for col in range(2, 6):
+
+            ws.cell(
+                row=row,
+                column=col
+            ).alignment = Alignment(
+                horizontal="center"
+            )
 
         row += 1
+
+    last_row = row - 1
+
+    if last_row >= 2:
+
+        table = Table(
+            displayName="PlayersTable",
+            ref=f"A1:E{last_row}"
+        )
+
+        style = TableStyleInfo(
+            name="TableStyleMedium2",
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=False
+        )
+
+        table.tableStyleInfo = style
+
+        ws.add_table(table)
+
+    ws.freeze_panes = "A2"
+
+    ws.column_dimensions["A"].width = 20
+    ws.column_dimensions["B"].width = 10
+    ws.column_dimensions["C"].width = 12
+    ws.column_dimensions["D"].width = 12
+    ws.column_dimensions["E"].width = 14
+
+    ws.sheet_view.showGridLines = False
 
     # ==================================================
     # AVVERSARI
@@ -155,9 +432,21 @@ def create_excel_report(scheduler, solver):
     ]
 
     for col, header in enumerate(headers, start=1):
-        cell = ws.cell(row=1, column=col)
+
+        cell = ws.cell(
+            row=1,
+            column=col
+        )
+
         cell.value = header
-        cell.font = Font(bold=True)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
 
     row = 2
 
@@ -172,73 +461,82 @@ def create_excel_report(scheduler, solver):
             if solver.Value(played_var):
 
                 if player == p1:
+
                     opponents.add(p2)
 
                 elif player == p2:
+
                     opponents.add(p1)
 
-        ws.cell(row=row, column=1).value = player
-        ws.cell(row=row, column=2).value = len(opponents)
-        ws.cell(row=row, column=3).value = ", ".join(
-            sorted(opponents)
+        values = [
+            player,
+            len(opponents),
+            ", ".join(sorted(opponents)),
+        ]
+
+        for col, value in enumerate(values, start=1):
+
+            cell = ws.cell(
+                row=row,
+                column=col
+            )
+
+            cell.value = value
+            cell.border = thin_border
+
+            if row % 2 == 0:
+
+                cell.fill = alternate_fill
+
+        ws.cell(
+            row=row,
+            column=2
+        ).alignment = Alignment(
+            horizontal="center"
+        )
+
+        ws.cell(
+            row=row,
+            column=3
+        ).alignment = Alignment(
+            vertical="top",
+            wrap_text=True
         )
 
         row += 1
 
+    last_row = row - 1
+
+    if last_row >= 2:
+
+        table = Table(
+            displayName="OpponentsTable",
+            ref=f"A1:C{last_row}"
+        )
+
+        style = TableStyleInfo(
+            name="TableStyleMedium2",
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=False
+        )
+
+        table.tableStyleInfo = style
+
+        ws.add_table(table)
+
+    ws.freeze_panes = "A2"
+
+    ws.column_dimensions["A"].width = 20
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 65
+
+    ws.sheet_view.showGridLines = False
+
     # ==================================================
-    # FORMATTAZIONE
+    # SALVATAGGIO
     # ==================================================
-
-    thin_border = Border(
-        left=Side(style="thin"),
-        right=Side(style="thin"),
-        top=Side(style="thin"),
-        bottom=Side(style="thin"),
-    )
-
-    for ws in wb.worksheets:
-
-        for row_cells in ws.iter_rows():
-
-            for cell in row_cells:
-
-                cell.alignment = Alignment(
-                    vertical="center"
-                )
-
-        # Formattazione intestazioni
-        for cell in ws[1]:
-
-            cell.font = Font(bold=True)
-
-            cell.alignment = Alignment(
-                horizontal="center",
-                vertical="center"
-            )
-
-            cell.border = thin_border
-
-        # Larghezza colonne automatica
-        for column_cells in ws.columns:
-
-            max_length = 0
-
-            column_letter = get_column_letter(
-                column_cells[0].column
-            )
-
-            for cell in column_cells:
-
-                if cell.value is not None:
-
-                    max_length = max(
-                        max_length,
-                        len(str(cell.value))
-                    )
-
-            ws.column_dimensions[
-                column_letter
-            ].width = min(max_length + 2, 60)
 
     wb.save(filename)
 

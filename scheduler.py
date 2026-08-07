@@ -69,6 +69,7 @@ class TournamentScheduler:
         # Statistiche
         self.player_matches = {}
         self.player_count_vars = {}
+        self.opponent_played_vars = {}
 
         # Target
         self.target_men_matches = 0
@@ -278,6 +279,27 @@ class TournamentScheduler:
 
       print(f"Variabili create: {count}")
 
+    def build_opponent_played_variables(self):
+
+      print("\nCreazione variabili Opponent Played...")
+
+      self.opponent_played_vars = {}
+
+      for players in self.opponent_count_vars:
+
+        p1, p2 = players
+
+        self.opponent_played_vars[players] = (
+            self.model.NewBoolVar(
+                f"played_{p1}_{p2}"
+            )
+        )
+
+      print(
+        f"Variabili create: {len(self.opponent_played_vars)}"
+      )
+
+
     def add_opponent_count_constraints(self):
 
       print("\nCollegamento Opponent Matrix...")
@@ -309,28 +331,28 @@ class TournamentScheduler:
       print(f"Vincoli creati: {len(self.opponent_count_vars)}")
 
 
-	def add_opponent_played_constraints(self):
+    def add_opponent_played_constraints(self):
 
-	    print("\nCollegamento variabili Opponent Played...")
-	
-	    for key in self.opponent_played_vars:
-	
-	        count_var = self.opponent_count_vars[key]
-	        played_var = self.opponent_played_vars[key]
-	
-	        # Se played = 0 allora count = 0
-	        self.model.Add(count_var == 0).OnlyEnforceIf(
-	            played_var.Not()
-	        )
-	
-	        # Se played = 1 allora count >= 1
-	        self.model.Add(count_var >= 1).OnlyEnforceIf(
-	            played_var
-	        )
-	
-	    print(
-	        f"Vincoli creati: {len(self.opponent_played_vars)}"
-	    )
+      print("\nCollegamento variabili Opponent Played...")
+
+      for key in self.opponent_played_vars:
+
+          count_var = self.opponent_count_vars[key]
+          played_var = self.opponent_played_vars[key]
+
+          # Se played = 0 allora count = 0
+          self.model.Add(count_var == 0).OnlyEnforceIf(
+              played_var.Not()
+          )
+
+          # Se played = 1 allora count >= 1
+          self.model.Add(count_var >= 1).OnlyEnforceIf(
+              played_var
+          )
+
+      print(
+          f"Vincoli creati: {len(self.opponent_played_vars)}"
+      )
 
    
     def add_objective(self):
@@ -455,8 +477,10 @@ if __name__ == "__main__":
     scheduler.build_men_deviation_variables()
     scheduler.build_soft_avoid_variables()
     scheduler.build_opponent_count_variables()
+    scheduler.build_opponent_played_variables()
+
     scheduler.add_opponent_count_constraints()
-	scheduler.add_opponent_played_constraints()
+    scheduler.add_opponent_played_constraints()
     scheduler.add_basic_constraints()
     scheduler.add_women_constraints()
     scheduler.add_objective()

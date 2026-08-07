@@ -284,3 +284,9 @@ optional session scheduling;
 additional tournament constraints;
 further Excel presentation improvements;
 additional testing with different tournament configurations.
+
+Coamndo per controllo compilazione
+!python -m py_compile /content/TennisScheduler/scheduler.py
+
+comando per ricerca istruzione
+!grep -R "TARGET_MATCHES_PER_WOMAN" /content/TennisScheduler

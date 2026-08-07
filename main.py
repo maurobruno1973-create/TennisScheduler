@@ -1,5 +1,5 @@
 from scheduler import TournamentScheduler
-
+from excel_reporter import create_excel_report
 
 if __name__ == "__main__":
 
@@ -22,4 +22,9 @@ if __name__ == "__main__":
     scheduler.add_women_constraints()
     scheduler.add_objective()
 
-    scheduler.solve()
+    solver = scheduler.solve()
+
+    create_excel_report(
+        scheduler,
+        solver
+    )

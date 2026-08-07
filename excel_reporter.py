@@ -1,9 +1,9 @@
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.utils import get_column_letter
 
 import config
-import openpyxl
 
 def create_excel_report(scheduler, solver):
 
@@ -440,131 +440,365 @@ def create_excel_report(scheduler, solver):
 
     ws = wb.create_sheet("Avversari")
 
-    headers = [
-        "Giocatore",
-        "Avversari diversi",
-    ]
+    # --------------------------------------------------
+    # Funzione per ottenere il numero di incontri
+    # tra due giocatori
+    # --------------------------------------------------
 
-    for col, header in enumerate(headers, start=1):
+    def get_opponent_count(player1, player2):
+
+        key = tuple(sorted((player1, player2)))
+
+        count_var = scheduler.opponent_count_vars.get(key)
+
+        if count_var is None:
+            return 0
+
+        return solver.Value(count_var)
+
+
+    # --------------------------------------------------
+    # Stile celle triangolo non utilizzato
+    # --------------------------------------------------
+
+    hidden_fill = PatternFill(
+        fill_type="solid",
+        fgColor="D9D9D9"
+    )
+
+
+    # ==================================================
+    # 1. DONNE × DONNE
+    # ==================================================
+
+    women = sorted(config.WOMEN)
+
+    start_row = 1
+
+    ws.merge_cells(
+        start_row=start_row,
+        start_column=1,
+        end_row=start_row,
+        end_column=len(women) + 1
+    )
+
+    cell = ws.cell(
+        row=start_row,
+        column=1
+    )
+
+    cell.value = "DONNE × DONNE"
+    cell.font = header_font
+    cell.fill = header_fill
+    cell.border = thin_border
+    cell.alignment = Alignment(
+        horizontal="center",
+        vertical="center"
+    )
+
+    header_row = start_row + 1
+
+    # intestazione colonne
+    ws.cell(
+        row=header_row,
+        column=1
+    ).value = ""
+
+    for j, woman in enumerate(women, start=2):
 
         cell = ws.cell(
-            row=1,
-            column=col
+            row=header_row,
+            column=j
         )
 
-        cell.value = header
+        cell.value = woman
         cell.font = header_font
         cell.fill = header_fill
         cell.border = thin_border
-
         cell.alignment = Alignment(
             horizontal="center",
             vertical="center"
         )
 
-    row = 2
+    # righe della matrice
+    for i, woman in enumerate(women):
 
-    for player in sorted(scheduler.player_count_vars):
+        row = header_row + 1 + i
 
-        opponents = set()
+        cell = ws.cell(
+            row=row,
+            column=1
+        )
 
-        for (p1, p2), played_var in (
-            scheduler.opponent_played_vars.items()
-        ):
+        cell.value = woman
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+        cell.alignment = Alignment(
+            horizontal="left",
+            vertical="center"
+        )
 
-            if solver.Value(played_var):
+        for j in range(len(women)):
 
-                if player == p1:
-
-                    opponents.add(p2)
-
-                elif player == p2:
-
-                    opponents.add(p1)
-
-        values = [
-            player,
-            len(opponents),
-            
-        ]
-
-        for col, value in enumerate(values, start=1):
+            col = j + 2
 
             cell = ws.cell(
                 row=row,
                 column=col
             )
 
-            cell.value = value
             cell.border = thin_border
+            cell.alignment = Alignment(
+                horizontal="center",
+                vertical="center"
+            )
+
+            # diagonale
+            if i == j:
+
+                cell.value = "—"
+                cell.fill = header_fill
+
+            # triangolo superiore
+            elif j > i:
+
+                cell.value = get_opponent_count(
+                    woman,
+                    women[j]
+                )
+
+                if row % 2 == 0:
+                    cell.fill = alternate_fill
+
+            # triangolo inferiore: oscurato
+            else:
+
+                cell.value = ""
+                cell.fill = hidden_fill
+
+
+    # ==================================================
+    # 2. UOMINI × UOMINI
+    # ==================================================
+
+    men = sorted(config.MEN)
+
+    start_row = header_row + len(women) + 3
+
+    ws.merge_cells(
+        start_row=start_row,
+        start_column=1,
+        end_row=start_row,
+        end_column=len(men) + 1
+    )
+
+    cell = ws.cell(
+        row=start_row,
+        column=1
+    )
+
+    cell.value = "UOMINI × UOMINI"
+    cell.font = header_font
+    cell.fill = header_fill
+    cell.border = thin_border
+    cell.alignment = Alignment(
+        horizontal="center",
+        vertical="center"
+    )
+
+    header_row = start_row + 1
+
+    # intestazione colonne
+    ws.cell(
+        row=header_row,
+        column=1
+    ).value = ""
+
+    for j, man in enumerate(men, start=2):
+
+        cell = ws.cell(
+            row=header_row,
+            column=j
+        )
+
+        cell.value = man
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+    # righe della matrice
+    for i, man in enumerate(men):
+
+        row = header_row + 1 + i
+
+        cell = ws.cell(
+            row=row,
+            column=1
+        )
+
+        cell.value = man
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+        cell.alignment = Alignment(
+            horizontal="left",
+            vertical="center"
+        )
+
+        for j in range(len(men)):
+
+            col = j + 2
+
+            cell = ws.cell(
+                row=row,
+                column=col
+            )
+
+            cell.border = thin_border
+            cell.alignment = Alignment(
+                horizontal="center",
+                vertical="center"
+            )
+
+            # diagonale
+            if i == j:
+
+                cell.value = "—"
+                cell.fill = header_fill
+
+            # triangolo superiore
+            elif j > i:
+
+                cell.value = get_opponent_count(
+                    man,
+                    men[j]
+                )
+
+                if row % 2 == 0:
+                    cell.fill = alternate_fill
+
+            # triangolo inferiore: oscurato
+            else:
+
+                cell.value = ""
+                cell.fill = hidden_fill
+
+
+    # ==================================================
+    # 3. UOMINI × DONNE
+    # ==================================================
+
+    start_row = header_row + len(men) + 3
+
+    ws.merge_cells(
+        start_row=start_row,
+        start_column=1,
+        end_row=start_row,
+        end_column=len(women) + 1
+    )
+
+    cell = ws.cell(
+        row=start_row,
+        column=1
+    )
+
+    cell.value = "UOMINI × DONNE"
+    cell.font = header_font
+    cell.fill = header_fill
+    cell.border = thin_border
+    cell.alignment = Alignment(
+        horizontal="center",
+        vertical="center"
+    )
+
+    header_row = start_row + 1
+
+    # intestazione colonne
+    ws.cell(
+        row=header_row,
+        column=1
+    ).value = ""
+
+    for j, woman in enumerate(women, start=2):
+
+        cell = ws.cell(
+            row=header_row,
+            column=j
+        )
+
+        cell.value = woman
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+    # righe della matrice
+    for i, man in enumerate(men):
+
+        row = header_row + 1 + i
+
+        cell = ws.cell(
+            row=row,
+            column=1
+        )
+
+        cell.value = man
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+        cell.alignment = Alignment(
+            horizontal="left",
+            vertical="center"
+        )
+
+        for j, woman in enumerate(women):
+
+            col = j + 2
+
+            cell = ws.cell(
+                row=row,
+                column=col
+            )
+
+            cell.value = get_opponent_count(
+                man,
+                woman
+            )
+
+            cell.border = thin_border
+            cell.alignment = Alignment(
+                horizontal="center",
+                vertical="center"
+            )
 
             if row % 2 == 0:
-
                 cell.fill = alternate_fill
 
-        ws.cell(
-            row=row,
-            column=2
-        ).alignment = Alignment(
-            horizontal="center"
-        )
 
-        row += 1
+    # ==================================================
+    # IMPOSTAZIONI FOGLIO
+    # ==================================================
 
-    last_row = row - 1
-
-    if last_row >= 2:
-
-        table = Table(
-            displayName="OpponentsTable",
-            ref=f"A1:B{last_row}"
-        )
-
-        style = TableStyleInfo(
-            name="TableStyleMedium2",
-            showFirstColumn=False,
-            showLastColumn=False,
-            showRowStripes=True,
-            showColumnStripes=False
-        )
-
-        table.tableStyleInfo = style
-
-        ws.add_table(table)
-
-    ws.freeze_panes = "A2"
+    ws.freeze_panes = "B3"
 
     ws.column_dimensions["A"].width = 20
-    ws.column_dimensions["B"].width = 20
+
+    for col in range(2, len(women) + 2):
+
+        ws.column_dimensions[
+            get_column_letter(col)
+        ].width = 14
 
     ws.sheet_view.showGridLines = False
 
-    # ==================================================
-    # CONTROLLO INTESTAZIONI TABELLE
-    # ==================================================
-
-    for ws in wb.worksheets:
-
-        for table in ws.tables.values():
-
-            print(f"\nControllo tabella: {ws.title} / {table.name}")
-
-            min_col, min_row, max_col, max_row = (
-                openpyxl.utils.range_boundaries(table.ref)
-            )
-
-            for col in range(min_col, max_col + 1):
-
-                value = ws.cell(
-                    row=min_row,
-                    column=col
-                ).value
-
-                print(
-                    f"  Colonna {col}: "
-                    f"{repr(value)} "
-                    f"({type(value).__name__})"
-                )
 
     # ==================================================
     # SALVATAGGIO

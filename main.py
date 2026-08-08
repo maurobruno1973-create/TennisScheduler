@@ -21,7 +21,6 @@ if __name__ == "__main__":
     scheduler.add_opponent_count_constraints()
     scheduler.add_opponent_played_constraints()
     scheduler.add_basic_constraints()
-    scheduler.add_women_constraints()
     scheduler.add_objective()
 
     solver = scheduler.solve()

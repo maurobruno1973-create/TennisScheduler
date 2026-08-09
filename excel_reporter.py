@@ -64,7 +64,7 @@ def create_excel_report(scheduler, solver):
     )
 
     # ==================================================
-    # RIEPILOGO
+    # FOGLIO 1 RIEPILOGO
     # ==================================================
 
     ws = wb.create_sheet("Riepilogo")
@@ -189,7 +189,7 @@ def create_excel_report(scheduler, solver):
     ws.sheet_view.showGridLines = False
 
     # ==================================================
-    # PARTITE
+    # FOGLIO 2 PARTITE
     # ==================================================
 
     ws = wb.create_sheet("Partite")
@@ -197,8 +197,7 @@ def create_excel_report(scheduler, solver):
     headers = [
       "N.",
       "Coppia 1",
-      "Coppia 2",
-      "Partite per Coppia"
+      "Coppia 2"
     ]
 
     for col, header in enumerate(headers, start=1):
@@ -240,13 +239,7 @@ def create_excel_report(scheduler, solver):
                 column=3
             ).value = str(match.pair2)
 
-            # Numero di partite previsto per ogni coppia
-            ws.cell(
-                row=row,
-                column=4
-            ).value = scheduler.target_pair_matches
-
-            for col in range(1, 5):
+            for col in range(1, 4):
 
                 cell = ws.cell(
                     row=row,
@@ -254,13 +247,6 @@ def create_excel_report(scheduler, solver):
                 )
 
                 cell.border = thin_border
-
-            ws.cell(
-                row=row,
-                column=1
-            ).alignment = Alignment(
-                horizontal="center"
-            )
 
             ws.cell(
                 row=row,
@@ -278,7 +264,7 @@ def create_excel_report(scheduler, solver):
 
         table = Table(
             displayName="MatchesTable",
-            ref=f"A1:D{last_row}"
+            ref=f"A1:C{last_row}"
           )
 
         style = TableStyleInfo(
@@ -298,28 +284,64 @@ def create_excel_report(scheduler, solver):
     ws.column_dimensions["A"].width = 8
     ws.column_dimensions["B"].width = 28
     ws.column_dimensions["C"].width = 28
-    ws.column_dimensions["D"].width = 20
 
     ws.sheet_view.showGridLines = False
 
     # ==================================================
-    # GIOCATORI
+    # FOGLIO 3 GIOCATORI
     # ==================================================
 
     ws = wb.create_sheet("Giocatori")
 
+
+    # ==================================================
+    # PARTITE PER COPPIA
+    # ==================================================
+
+    pair_match_counts = {}
+
+    for i, match in enumerate(scheduler.matches):
+
+        if solver.Value(scheduler.match_vars[i]):
+
+            pair1 = (
+                match.pair1.man,
+                match.pair1.woman
+            )
+
+            pair2 = (
+                match.pair2.man,
+                match.pair2.woman
+            )
+
+            pair_match_counts[pair1] = (
+                pair_match_counts.get(pair1, 0) + 1
+            )
+
+            pair_match_counts[pair2] = (
+                pair_match_counts.get(pair2, 0) + 1
+            )
+
+
+    # ==================================================
+    # COPPIE
+    # ==================================================
+
+    ws["A1"] = "COPPIE"
+    ws["A1"].font = header_font
+    ws["A1"].fill = header_fill
+    ws["A1"].border = thin_border
+
+
     headers = [
-        "Giocatore",
-        "Sesso",
+        "Coppia",
         "Partite",
-        "Target",
-        "Deviazione",
     ]
 
     for col, header in enumerate(headers, start=1):
 
         cell = ws.cell(
-            row=1,
+            row=2,
             column=col
         )
 
@@ -333,7 +355,108 @@ def create_excel_report(scheduler, solver):
             vertical="center"
         )
 
-    row = 2
+
+    row = 3
+
+    for man, woman in config.PAIRS:
+
+        pair = (man, woman)
+
+        ws.cell(
+            row=row,
+            column=1
+        ).value = f"{man} - {woman}"
+
+        ws.cell(
+            row=row,
+            column=2
+        ).value = pair_match_counts.get(pair, 0)
+
+        for col in range(1, 3):
+
+            cell = ws.cell(
+                row=row,
+                column=col
+            )
+
+            cell.border = thin_border
+
+            if row % 2 == 1:
+
+                cell.fill = alternate_fill
+
+        ws.cell(
+            row=row,
+            column=2
+        ).alignment = Alignment(
+            horizontal="center"
+        )
+
+        row += 1
+
+
+    last_pair_row = row - 1
+
+
+    # ==================================================
+    # GIOCATORI
+    # ==================================================
+
+    row += 2
+
+    ws.cell(
+        row=row,
+        column=1
+    ).value = "GIOCATORI"
+
+    ws.cell(
+        row=row,
+        column=1
+    ).font = header_font
+
+    ws.cell(
+        row=row,
+        column=1
+    ).fill = header_fill
+
+    ws.cell(
+        row=row,
+        column=1
+    ).border = thin_border
+
+
+    row += 1
+
+
+    headers = [
+        "Giocatore",
+        "Sesso",
+        "Partite",
+        "Target",
+        "Deviazione",
+    ]
+
+    for col, header in enumerate(headers, start=1):
+
+        cell = ws.cell(
+            row=row,
+            column=col
+        )
+
+        cell.value = header
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+
+    row += 1
+
+    players_start_row = row
 
     for player in sorted(scheduler.player_count_vars):
 
@@ -381,16 +504,12 @@ def create_excel_report(scheduler, solver):
 
                 cell.fill = alternate_fill
 
-        # Evidenzia eventuale deviazione
-
         if deviation != 0:
 
             ws.cell(
                 row=row,
                 column=5
             ).fill = warning_fill
-
-        # Allineamento colonne numeriche
 
         for col in range(2, 6):
 
@@ -403,13 +522,19 @@ def create_excel_report(scheduler, solver):
 
         row += 1
 
-    last_row = row - 1
 
-    if last_row >= 2:
+    last_player_row = row - 1
+
+
+    # ==================================================
+    # TABELLA COPPIE
+    # ==================================================
+
+    if last_pair_row >= 3:
 
         table = Table(
-            displayName="PlayersTable",
-            ref=f"A1:E{last_row}"
+            displayName="PairsTable",
+            ref=f"A2:B{last_pair_row}"
         )
 
         style = TableStyleInfo(
@@ -424,10 +549,39 @@ def create_excel_report(scheduler, solver):
 
         ws.add_table(table)
 
-    ws.freeze_panes = "A2"
 
-    ws.column_dimensions["A"].width = 20
-    ws.column_dimensions["B"].width = 10
+    # ==================================================
+    # TABELLA GIOCATORI
+    # ==================================================
+
+    if last_player_row >= players_start_row:
+
+        table = Table(
+            displayName="PlayersTable",
+            ref=f"A{players_start_row - 1}:E{last_player_row}"
+        )
+
+        style = TableStyleInfo(
+            name="TableStyleMedium2",
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=False
+        )
+
+        table.tableStyleInfo = style
+
+        ws.add_table(table)
+
+
+    # ==================================================
+    # FORMATO
+    # ==================================================
+
+    ws.freeze_panes = "A3"
+
+    ws.column_dimensions["A"].width = 22
+    ws.column_dimensions["B"].width = 12
     ws.column_dimensions["C"].width = 12
     ws.column_dimensions["D"].width = 12
     ws.column_dimensions["E"].width = 14
@@ -435,7 +589,7 @@ def create_excel_report(scheduler, solver):
     ws.sheet_view.showGridLines = False
 
     # ==================================================
-    # AVVERSARI
+    # FOGLIO 4 AVVERSARI
     # ==================================================
 
     ws = wb.create_sheet("Avversari")

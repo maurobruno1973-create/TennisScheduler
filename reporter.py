@@ -52,7 +52,7 @@ def report_solution(scheduler, solver):
     # Partite selezionate
     # ----------------------------------
 
-    print("=== PARTITE SELEZIONATE ===")
+    print("\n=== PARTITE SELEZIONATE ===")
 
     count = 1
 
@@ -101,8 +101,7 @@ def report_solution(scheduler, solver):
 
         print(
             f"{player:10} "
-            f"{len(opponents)} -> "
-            f"{', '.join(sorted(opponents))}"
+            f"{len(opponents)}"
         )
 
     # ----------------------------------
@@ -125,3 +124,19 @@ def report_solution(scheduler, solver):
 
     print("----------------------")
     print(f"Totale      {total}")
+
+    # ----------------------------------
+    # Filtri uniformita' U/D
+    # ----------------------------------
+
+def report_final_solution(scheduler, final_matches):
+
+    print("=== SOLUZIONE FINALE ===")
+
+    print("=== PARTITE SELEZIONATE ===")
+
+    for count, match in enumerate(final_matches, start=1):
+
+      print(
+         f"{count:2d}. {match}"
+      )

@@ -5,7 +5,15 @@ from openpyxl.utils import get_column_letter
 
 import config
 
-def create_excel_report(scheduler, solver):
+def create_excel_report(
+    scheduler,
+    solver,
+    final_matches,
+    optimal_solutions,
+    dd_solutions,
+    uu_solutions,
+    final_solutions
+    ):
 
     filename = "TennisScheduler_Result.xlsx"
 
@@ -94,6 +102,8 @@ def create_excel_report(scheduler, solver):
         for var in scheduler.match_vars.values()
     )
 
+    possible_matches = len(scheduler.matches)
+
     duplicate_matches = 0
 
     men_deviation = sum(
@@ -112,6 +122,10 @@ def create_excel_report(scheduler, solver):
     )
 
     summary = [
+        (
+            "Possibili incontri",
+            possible_matches
+        ),
         (
             "Partite selezionate",
             f"{selected_matches} / {config.NUM_MATCHES}"
@@ -136,8 +150,23 @@ def create_excel_report(scheduler, solver):
             "Verifica finale",
             "OK"
         ),
+        (
+            "Soluzioni ottimali",
+            optimal_solutions
+        ),
+        (
+            "Soluzioni dopo filtro D×D",
+            dd_solutions
+        ),
+        (
+            "Soluzioni dopo filtro U×U",
+            uu_solutions
+        ),
+        (
+            "Soluzioni finali dopo filtro U×D",
+            final_solutions
+        ),
     ]
-
     row = 5
 
     for label, value in summary:
@@ -193,7 +222,7 @@ def create_excel_report(scheduler, solver):
     # ==================================================
 
     ws = wb.create_sheet("Partite")
-
+    
     headers = [
       "N.",
       "Coppia 1",
@@ -220,43 +249,34 @@ def create_excel_report(scheduler, solver):
     row = 2
     match_number = 1
 
-    for i, match in enumerate(scheduler.matches):
+    for match in final_matches:
 
-        if solver.Value(scheduler.match_vars[i]):
+        ws.cell(
+            row=row,
+            column=1
+        ).value = match_number
 
-            ws.cell(
+        ws.cell(
+            row=row,
+            column=2
+        ).value = str(match.pair1)
+
+        ws.cell(
+            row=row,
+            column=3
+        ).value = str(match.pair2)
+
+        for col in range(1, 4):
+
+            cell = ws.cell(
                 row=row,
-                column=1
-            ).value = match_number
-
-            ws.cell(
-                row=row,
-                column=2
-            ).value = str(match.pair1)
-
-            ws.cell(
-                row=row,
-                column=3
-            ).value = str(match.pair2)
-
-            for col in range(1, 4):
-
-                cell = ws.cell(
-                    row=row,
-                    column=col
-                )
-
-                cell.border = thin_border
-
-            ws.cell(
-                row=row,
-                column=4
-            ).alignment = Alignment(
-                horizontal="center"
+                column=col
             )
 
-            row += 1
-            match_number += 1
+            cell.border = thin_border
+
+        row += 1
+        match_number += 1
 
     last_row = row - 1
 
@@ -601,14 +621,27 @@ def create_excel_report(scheduler, solver):
 
     def get_opponent_count(player1, player2):
 
-        key = tuple(sorted((player1, player2)))
+        count = 0
 
-        count_var = scheduler.opponent_count_vars.get(key)
+        for match in final_matches:
 
-        if count_var is None:
-            return 0
+            players1 = [
+                match.pair1.man,
+                match.pair1.woman
+            ]
 
-        return solver.Value(count_var)
+            players2 = [
+                match.pair2.man,
+                match.pair2.woman
+            ]
+
+            if player1 in players1 and player2 in players2:
+                count += 1
+
+            elif player1 in players2 and player2 in players1:
+                count += 1
+
+        return count
 
 
     # --------------------------------------------------

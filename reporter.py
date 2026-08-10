@@ -49,22 +49,6 @@ def report_solution(scheduler, solver):
     )
 
     # ----------------------------------
-    # Partite selezionate
-    # ----------------------------------
-
-    print("\n=== PARTITE SELEZIONATE ===")
-
-    count = 1
-
-    for i, match in enumerate(scheduler.matches):
-
-        if solver.Value(scheduler.match_vars[i]):
-
-            print(f"{count:2d}. {match}")
-
-            count += 1
-
-    # ----------------------------------
     # Partite per giocatore
     # ----------------------------------
 
@@ -133,7 +117,7 @@ def report_final_solution(scheduler, final_matches):
 
     print("=== SOLUZIONE FINALE ===")
 
-    print("=== PARTITE SELEZIONATE ===")
+    print("\n=== PARTITE SELEZIONATE Dopo Filtro ===")
 
     for count, match in enumerate(final_matches, start=1):
 

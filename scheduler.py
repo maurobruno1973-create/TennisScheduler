@@ -1542,6 +1542,13 @@ class TournamentScheduler:
         #        f"| Soluzioni: {count}"
         #    )
 
+        return (
+            final_matches,
+            callback.count,
+            len(callback.best_dd_solutions_data),
+            len(dd_uu_candidates),
+            len(final_candidates)
+        )
             
     def solve(self):
 
@@ -1569,12 +1576,24 @@ class TournamentScheduler:
             f"\nObiettivo ottimale rilevato: {optimal_objective}"
         )
         
-        self.enumerate_optimal_solutions(
+        (
+            final_matches,
+            optimal_solutions,
+            dd_solutions,
+            uu_solutions,
+            final_solutions
+        ) = self.enumerate_optimal_solutions(
             optimal_objective,
             max_solutions=100
         )
 
 
-
-        return solver
+        return (
+            solver,
+            final_matches,
+            optimal_solutions,
+            dd_solutions,
+            uu_solutions,
+            final_solutions
+        )
 

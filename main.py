@@ -23,9 +23,21 @@ if __name__ == "__main__":
     scheduler.add_basic_constraints()
     scheduler.add_objective()
 
-    solver = scheduler.solve()
+    (
+        solver,
+        final_matches,
+        optimal_solutions,
+        dd_solutions,
+        uu_solutions,
+        final_solutions
+    ) = scheduler.solve()
 
     create_excel_report(
         scheduler,
-        solver
+        solver,
+        final_matches,
+        optimal_solutions,
+        dd_solutions,
+        uu_solutions,
+        final_solutions
     )

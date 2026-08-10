@@ -1,0 +1,161 @@
+=== CONTRIBUTO FUNZIONE OBIETTIVO ===
+Bilanciamento uomini:       0
+Incontri da evitare:        0
+Avversari diversi:         -44
+-------------------------------
+Totale obiettivo:           -44
+
+=== PARTITE SELEZIONATE ===
+ 1. Ash - Tiantian   vs   Graeme - Beth
+ 2. Ash - Tiantian   vs   Graeme - Maryna
+ 3. Ash - Tiantian   vs   Quentin - Paola
+ 4. Ash - Lina   vs   Quentin - Tiantian
+ 5. Ash - Lina   vs   Quentin - Matilde
+ 6. Ash - Lina   vs   Mauro - Paola
+ 7. Ash - Maryna   vs   Graeme - Matilde
+ 8. Ash - Maryna   vs   Quentin - Paola
+ 9. Ash - Maryna   vs   Mauro - Lina
+10. Graeme - Beth   vs   Quentin - Matilde
+11. Graeme - Beth   vs   Mauro - Lina
+12. Graeme - Matilde   vs   Quentin - Tiantian
+13. Graeme - Matilde   vs   Mauro - Beth
+14. Graeme - Maryna   vs   Mauro - Beth
+15. Graeme - Maryna   vs   Mauro - Lina
+16. Quentin - Tiantian   vs   Mauro - Paola
+17. Quentin - Matilde   vs   Mauro - Paola
+18. Quentin - Paola   vs   Mauro - Beth
+
+=== PARTITE PER GIOCATORE ===
+Ash        9
+Beth       6
+Graeme     9
+Lina       6
+Maryna     6
+Matilde    6
+Mauro      9
+Paola      6
+Quentin    9
+Tiantian   6
+
+=== AVVERSARI DIVERSI ===
+Ash        9
+Beth       9
+Graeme     8
+Lina       9
+Maryna     9
+Matilde    9
+Mauro      9
+Paola      8
+Quentin    9
+Tiantian   9
+
+=== DEVIAZIONE UOMINI ===
+Ash        0
+Graeme     0
+Quentin    0
+Mauro      0
+----------------------
+Totale      0
+
+=== VERIFICA SOLUZIONE ===
+Partite selezionate       : 18 / 18   OK
+Partite duplicate         : 0   OK
+
+PARTITE PER DONNA
+Beth                     : 6   OK
+Lina                     : 6   OK
+Maryna                   : 6   OK
+Matilde                  : 6   OK
+Paola                    : 6   OK
+Tiantian                 : 6   OK
+
+PARTITE PER UOMO
+Ash                      : 9 (target 9, deviazione 0)
+Graeme                   : 9 (target 9, deviazione 0)
+Quentin                  : 9 (target 9, deviazione 0)
+Mauro                    : 9 (target 9, deviazione 0)
+
+Giocatori contro se stessi: 0   OK
+Incontri indesiderati     : 0
+Avversari diversi         : 44
+
+==========================================
+VERIFICA FINALE: OK
+==========================================
+
+Obiettivo ottimale rilevato: -44.0
+
+==========================================
+ENUMERAZIONE SOLUZIONI OTTIMALI
+==========================================
+Obiettivo ottimale: -44.0
+Limite temporaneo: 100
+=== SOLUZIONE FINALE ===
+
+=== PARTITE SELEZIONATE ===
+ 1. Ash - Tiantian   vs   Graeme - Maryna
+ 2. Ash - Tiantian   vs   Quentin - Paola
+ 3. Ash - Tiantian   vs   Mauro - Beth
+ 4. Ash - Lina   vs   Graeme - Beth
+ 5. Ash - Lina   vs   Quentin - Tiantian
+ 6. Ash - Lina   vs   Mauro - Paola
+ 7. Ash - Maryna   vs   Graeme - Matilde
+ 8. Ash - Maryna   vs   Quentin - Paola
+ 9. Ash - Maryna   vs   Mauro - Lina
+10. Graeme - Beth   vs   Quentin - Matilde
+11. Graeme - Beth   vs   Mauro - Lina
+12. Graeme - Matilde   vs   Quentin - Tiantian
+13. Graeme - Matilde   vs   Mauro - Lina
+14. Graeme - Maryna   vs   Quentin - Matilde
+15. Graeme - Maryna   vs   Mauro - Beth
+16. Quentin - Tiantian   vs   Mauro - Paola
+17. Quentin - Matilde   vs   Mauro - Paola
+18. Quentin - Paola   vs   Mauro - Beth
+
+------------------------------------------
+Soluzioni ottimali trovate: 86
+Migliore uniformità U×U: 0
+------------------------------------------
+
+UNIFORMITÀ DONNA × DONNA
+------------------------------------------
+Penalità   72 : 86 soluzioni
+
+ Migliore uniformità D×D: 72
+Soluzioni con migliore D×D: 86
+
+ Soluzioni candidate dopo filtro D×D: 86
+Soluzioni salvate: 86
+------------------------------------------
+
+UNIFORMITÀ UOMO × UOMO
+------------------------------------------
+Penalità    0 : 40 soluzioni
+Penalità   24 : 46 soluzioni
+Migliore U×U tra le candidate D×D: 0
+------------------------------------------
+
+UNIFORMITÀ UOMO × DONNA
+------------------------------------------
+Candidate dopo U×U: 40
+Migliore U×D tra le candidate D×D/U×U: 312
+Penalità 312 : 10 soluzioni
+------------------------------------------
+Soluzioni finali: 10
+
+ TUTTE le STRUTTURE DONNA × DONNA
+------------------------------------------
+Max incontri: 2 | Distribuzione: {1: 12, 2: 3} | Soluzioni: 86
+
+TUTTE le STRUTTURA UOMO × UOMO
+------------------------------------------
+Max incontri: 4 | Distribuzione: {2: 2, 3: 2, 4: 2} | Soluzioni: 46
+Max incontri: 3 | Distribuzione: {3: 6} | Soluzioni: 40
+
+## STRUTTURA D×D DELLE SOLUZIONI FINALI
+------------------------------------------
+Max incontri: 2 | Distribuzione: {1: 12, 2: 3} | Soluzioni: 10
+
+## STRUTTURA U×U DELLE SOLUZIONI FINALI
+------------------------------------------
+Max incontri: 3 | Distribuzione: {3: 6} | Soluzioni: 10

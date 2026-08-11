@@ -290,3 +290,30 @@ Coamndo per controllo compilazione
 
 comando per ricerca istruzione
 !grep -R "TARGET_MATCHES_PER_WOMAN" /content/TennisScheduler
+
+Configurazione ottimale da impostare
+                 SCHEDULER
+                    │
+                    │ solve()
+                    ↓
+          soluzione ottimizzata
+                    │
+                    ↓
+          ENUMERATION
+                    │
+          final_candidates
+                    │
+                    ↓
+           TIER EVALUATOR
+             ┌──────┴──────┐
+             ↓             ↓
+         Metodo 1       Metodo 2
+             └──────┬──────┘
+                    ↓
+          selezione finale
+                    │
+                    ↓
+             final_solution
+                    │
+                    ↓
+                solve()

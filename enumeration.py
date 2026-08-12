@@ -5,10 +5,10 @@ Enumerazione delle soluzioni ottimali.
 
 import config
 
-from reporter import report_final_solution
 
 from ortools.sat.python import cp_model
 
+from tier_evaluation import evaluate_final_candidates
 
 def enumerate_optimal_solutions(
     scheduler,
@@ -648,18 +648,65 @@ def enumerate_optimal_solutions(
             for solution in dd_uu_candidates
             if solution["ud_penalty"] == best_ud
         ]
+        
+        pareto_candidates = evaluate_final_candidates(
+            final_candidates
+        )
 
-        final_solution = final_candidates[0]
+        print("\n=== SELEZIONE SOLUZIONE ===")
+
+        print(
+            f"\nSono disponibili {len(pareto_candidates)} "
+            "soluzioni Pareto.\n"
+        )
+
+        for index, candidate in enumerate(
+            pareto_candidates,
+            start=1
+        ):
+
+            print(
+                f"[{index}] "
+                f"P{candidate['solution_number']} → "
+                f"M1: {candidate['method1']} | "
+                f"M2: {candidate['method2']}"
+            )
+
+        while True:
+
+            choice = input(
+                f"\nSeleziona la soluzione da utilizzare "
+                f"[1-{len(pareto_candidates)}]: "
+            )
+
+            try:
+
+                choice = int(choice)
+
+                if 1 <= choice <= len(pareto_candidates):
+                    break
+
+                print(
+                    f"Scelta non valida. Inserisci un numero "
+                    f"tra 1 e {len(pareto_candidates)}."
+                )
+
+            except ValueError:
+
+                print("Inserisci un numero valido.")
+
+        selected_candidate = pareto_candidates[choice - 1]
+
+        print(
+            f"DEBUG: selezionata P{selected_candidate['solution_number']}"
+        )
+     
+        final_solution = selected_candidate["solution"]
 
         final_matches = final_solution["matches"]
 
-        report_final_solution(
-            scheduler,
-            final_matches
-        )
-
         # ==================================================
-        # 8. REPORT
+        # 10. REPORT
         # ==================================================
 
         print("\n------------------------------------------")
@@ -690,7 +737,7 @@ def enumerate_optimal_solutions(
         print("------------------------------------------")
         
         # ----------------------------------------------
-        # 8.1 D×D
+        # 10.1 D×D
         # ----------------------------------------------
         
         print("\nUNIFORMITÀ DONNA × DONNA")
@@ -728,7 +775,7 @@ def enumerate_optimal_solutions(
         print("------------------------------------------")
 
         # ----------------------------------------------
-        # 8.2 U×U
+        # 10.2 U×U
         # ----------------------------------------------
 
         print("\nUNIFORMITÀ UOMO × UOMO")
@@ -749,7 +796,7 @@ def enumerate_optimal_solutions(
         )
         print("------------------------------------------")            
         # ----------------------------------------------
-        # 8.3 U×D
+        # 10.3 U×D
         # ----------------------------------------------
 
         print("\nUNIFORMITÀ UOMO × DONNA")
@@ -781,7 +828,7 @@ def enumerate_optimal_solutions(
         )
         
         # ----------------------------------------------
-        # 8.4 COMBINAZIONI U×U / U×D
+        # 10.4 COMBINAZIONI U×U / U×D
         # ----------------------------------------------
 
         #print("\nCOMBINAZIONI U×U / U×D")
@@ -798,48 +845,91 @@ def enumerate_optimal_solutions(
         #    )
 
         # ----------------------------------------------
-        # 8.5 STRUTTURA D×D
+        # 10.5 STRUTTURA D×D
         # ----------------------------------------------
 
-        print("\n TUTTE le STRUTTURE DONNA × DONNA")
-        print("------------------------------------------")
+        #print("\n TUTTE le STRUTTURE DONNA × DONNA")
+        #print("------------------------------------------")
 
-        for pattern, count in sorted(
-            callback.women_matrix_patterns.items()
-        ):
+        #for pattern, count in sorted(
+        #    callback.women_matrix_patterns.items()
+        #):
 
-            distribution, max_meetings = pattern
+        #    distribution, max_meetings = pattern
+
+        #    print(
+        #        f"Max incontri: {max_meetings} | "
+        #        f"Distribuzione: "
+        #        f"{dict(distribution)} "
+        #        f"| Soluzioni: {count}"
+        #    )
+
+        # ----------------------------------------------
+        # 10.6 STRUTTURA U×U
+        # ----------------------------------------------
+
+        #print("\nTUTTE le STRUTTURA UOMO × UOMO")
+        #print("------------------------------------------")
+
+        #for pattern, count in sorted(
+        #    callback.men_matrix_patterns.items()
+        #):
+
+        #    distribution, max_meetings = pattern
+
+        #    print(
+        #        f"Max incontri: {max_meetings} | "
+        #        f"Distribuzione: "
+        #        f"{dict(distribution)} "
+        #        f"| Soluzioni: {count}"
+        #    )
+
+
+        # ==============================
+        # 10.7 RISULTATO del PARETO
+        # ==============================
+
+        print(
+            "\n=== PARETO CANDIDATES ==="
+        )
+
+        for candidate in pareto_candidates:
+
+            solution_number = candidate["solution_number"]
 
             print(
-                f"Max incontri: {max_meetings} | "
-                f"Distribuzione: "
-                f"{dict(distribution)} "
-                f"| Soluzioni: {count}"
+                f"\nP{solution_number} → "
+                f"M1: {candidate['method1']} | "
+                f"M2: {candidate['method2']}\n"
             )
 
-        # ----------------------------------------------
-        # 8.6 STRUTTURA U×U
-        # ----------------------------------------------
+            for man in config.MEN:
 
-        print("\nTUTTE le STRUTTURA UOMO × UOMO")
-        print("------------------------------------------")
+                tier_counts = candidate["tier_counts"][man]
+                print(
+                f"{man}: "
+                f"T1={tier_counts[1]} "
+                f"T2={tier_counts[2]} "
+                f"T3={tier_counts[3]}"
+                )
 
-        for pattern, count in sorted(
-            callback.men_matrix_patterns.items()
-        ):
+            delta_distribution = candidate["delta_distribution"]
 
-            distribution, max_meetings = pattern
+            print("\nM2:"
+                f"Δ0={delta_distribution[0]} | "
+                f"Δ1={delta_distribution[1]} | "
+                f"Δ2={delta_distribution[2]}"
+            )
 
             print(
-                f"Max incontri: {max_meetings} | "
-                f"Distribuzione: "
-                f"{dict(distribution)} "
-                f"| Soluzioni: {count}"
+                f"Differenza totale={candidate['method2']}"
             )
+           
+               
         # ----------------------------------------------
-        # 8.7 STRUTTURA DELLE SOLUZIONI FINALI
+        # 10.8 STRUTTURA DELLE SOLUZIONI FINALI
         # ----------------------------------------------
-
+        print("\n=== ANALISI TIER SOLUZIONI FINALI ===")
         final_women_patterns = {}
         final_men_patterns = {}
 

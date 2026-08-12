@@ -109,18 +109,5 @@ def report_solution(scheduler, solver):
     print("----------------------")
     print(f"Totale      {total}")
 
-    # ----------------------------------
-    # Filtri uniformita' U/D
-    # ----------------------------------
 
-def report_final_solution(scheduler, final_matches):
 
-    print("=== SOLUZIONE FINALE ===")
-
-    print("\n=== PARTITE SELEZIONATE Dopo Filtro ===")
-
-    for count, match in enumerate(final_matches, start=1):
-
-      print(
-         f"{count:2d}. {match}"
-      )

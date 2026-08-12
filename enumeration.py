@@ -649,59 +649,69 @@ def enumerate_optimal_solutions(
             if solution["ud_penalty"] == best_ud
         ]
         
-        pareto_candidates = evaluate_final_candidates(
-            final_candidates
-        )
+        if config.USE_WOMEN_TIERS:
 
-        print("\n=== SELEZIONE SOLUZIONE ===")
+            # ==================================================
+            # TIER → PARETO → SCELTA UTENTE
+            # ==================================================
 
-        print(
-            f"\nSono disponibili {len(pareto_candidates)} "
-            "soluzioni Pareto.\n"
-        )
+            pareto_candidates = evaluate_final_candidates(
+                final_candidates
+            )
 
-        for index, candidate in enumerate(
-            pareto_candidates,
-            start=1
-        ):
+            print("\n=== SELEZIONE SOLUZIONE ===")
 
             print(
-                f"[{index}] "
-                f"P{candidate['solution_number']} → "
-                f"M1: {candidate['method1']} | "
-                f"M2: {candidate['method2']}"
+                f"\nSono disponibili {len(pareto_candidates)} "
+                "soluzioni Pareto.\n"
             )
 
-        while True:
-
-            choice = input(
-                f"\nSeleziona la soluzione da utilizzare "
-                f"[1-{len(pareto_candidates)}]: "
-            )
-
-            try:
-
-                choice = int(choice)
-
-                if 1 <= choice <= len(pareto_candidates):
-                    break
+            for index, candidate in enumerate(
+                pareto_candidates,
+                start=1
+            ):
 
                 print(
-                    f"Scelta non valida. Inserisci un numero "
-                    f"tra 1 e {len(pareto_candidates)}."
+                    f"[{index}] "
+                    f"P{candidate['solution_number']} → "
+                    f"M1: {candidate['method1']} | "
+                    f"M2: {candidate['method2']}"
                 )
 
-            except ValueError:
+            while True:
 
-                print("Inserisci un numero valido.")
+                choice = input(
+                    f"\nSeleziona la soluzione da utilizzare "
+                    f"[1-{len(pareto_candidates)}]: "
+                )
 
-        selected_candidate = pareto_candidates[choice - 1]
+                try:
 
-        print(
-            f"DEBUG: selezionata P{selected_candidate['solution_number']}"
-        )
-     
-        final_solution = selected_candidate["solution"]
+                    choice = int(choice)
+
+                    if 1 <= choice <= len(pareto_candidates):
+                        break
+
+                    print(
+                        f"Scelta non valida. Inserisci un numero "
+                        f"tra 1 e {len(pareto_candidates)}."
+                    )
+
+                except ValueError:
+
+                    print("Inserisci un numero valido.")
+
+            selected_candidate = pareto_candidates[choice - 1]
+
+            final_solution = selected_candidate["solution"]
+
+        else:
+
+            # ==================================================
+            # SENZA TIER → SELEZIONE AUTOMATICA
+            # ==================================================
+
+            final_solution = final_candidates[0]
 
         final_matches = final_solution["matches"]
 
@@ -888,48 +898,49 @@ def enumerate_optimal_solutions(
         # ==============================
         # 10.7 RISULTATO del PARETO
         # ==============================
-
-        print(
-            "\n=== PARETO CANDIDATES ==="
-        )
-
-        for candidate in pareto_candidates:
-
-            solution_number = candidate["solution_number"]
-
+        
+        if config.USE_WOMEN_TIERS:
             print(
-                f"\nP{solution_number} → "
-                f"M1: {candidate['method1']} | "
-                f"M2: {candidate['method2']}\n"
+                "\n=== PARETO CANDIDATES ==="
             )
 
-            for man in config.MEN:
+            for candidate in pareto_candidates:
 
-                tier_counts = candidate["tier_counts"][man]
+                solution_number = candidate["solution_number"]
+
                 print(
-                f"{man}: "
-                f"T1={tier_counts[1]} "
-                f"T2={tier_counts[2]} "
-                f"T3={tier_counts[3]}"
+                    f"\nP{solution_number} → "
+                    f"M1: {candidate['method1']} | "
+                    f"M2: {candidate['method2']}\n"
                 )
 
-            delta_distribution = candidate["delta_distribution"]
+                for man in config.MEN:
 
-            print("\nM2:"
-                f"Δ0={delta_distribution[0]} | "
-                f"Δ1={delta_distribution[1]} | "
-                f"Δ2={delta_distribution[2]}"
-            )
+                    tier_counts = candidate["tier_counts"][man]
+                    print(
+                    f"{man}: "
+                    f"T1={tier_counts[1]} "
+                    f"T2={tier_counts[2]} "
+                    f"T3={tier_counts[3]}"
+                    )
 
-            print(
-                f"Differenza totale={candidate['method2']}"
-            )
+                delta_distribution = candidate["delta_distribution"]
+
+                print("\nM2:"
+                    f"Δ0={delta_distribution[0]} | "
+                    f"Δ1={delta_distribution[1]} | "
+                    f"Δ2={delta_distribution[2]}"
+                )
+
+                print(
+                    f"Differenza totale={candidate['method2']}"
+                )
            
                
         # ----------------------------------------------
         # 10.8 STRUTTURA DELLE SOLUZIONI FINALI
         # ----------------------------------------------
-        print("\n=== ANALISI TIER SOLUZIONI FINALI ===")
+        print("\n=== ANALISI SOLUZIONI FINALI ===")
         final_women_patterns = {}
         final_men_patterns = {}
 

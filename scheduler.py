@@ -14,7 +14,7 @@ from models import Pair, Match
 
 from match_generator import generate_matches
 from validator import validate_solution
-from reporter import report_solution, report_final_solution
+from reporter import report_solution
 
 from enumeration import enumerate_optimal_solutions
 
